@@ -2,9 +2,16 @@ package com.daykon.irontracker
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.IndicationInstance
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -51,6 +59,8 @@ import com.daykon.irontracker.db.ExerciseRecord
 import com.daykon.irontracker.db.ExerciseRecordEvent
 import com.daykon.irontracker.db.ExerciseState
 import com.daykon.irontracker.db.MuscleGroup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
@@ -171,7 +181,7 @@ fun MainScreen (
                         mutableStateOf(false)
                     }
                     val density = LocalDensity.current
-
+                    val interactionSource = remember { MutableInteractionSource() }
 
                     Row(
                         modifier = Modifier
@@ -183,18 +193,28 @@ fun MainScreen (
                                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                         pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
                                         isContextDialogVisible = true
+                                        val press = PressInteraction.Press(it)
+                                        interactionSource.tryEmit(press)
+                                        interactionSource.tryEmit(PressInteraction.Release(press))
 
 
                                     },
                                     onTap = {
+
                                         if (!state.isAddingExerciseRecord && !state.isAddingExercise) {
                                             onEvent(ExerciseRecordEvent.ShowGraph(exercise.id))
+                                            val press = PressInteraction.Press(it)
+                                            interactionSource.tryEmit(press)
+                                            interactionSource.tryEmit(PressInteraction.Release(press))
                                         }
                                     }
                                 )
-                            }.onSizeChanged {
+
+                            }
+                            .onSizeChanged {
                                 itemHeight = with(density) { it.height.toDp() }
                             }
+                            .indication(interactionSource, rememberRipple())
 
                     ) {
                         Column(
