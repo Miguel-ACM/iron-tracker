@@ -181,7 +181,7 @@ fun MainScreen (
                                     onLongPress = {
 
                                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        pressOffset = DpOffset(it.x.toDp(), it.x.toDp())
+                                        pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
                                         isContextDialogVisible = true
 
 
@@ -197,25 +197,6 @@ fun MainScreen (
                             }
 
                     ) {
-
-
-                        DropdownMenu(expanded = isContextDialogVisible,
-                            onDismissRequest = {
-                                isContextDialogVisible = false
-                            },
-                            offset = pressOffset.copy(
-                                y = pressOffset.y
-                            ),
-                        ) {
-                            DropdownMenuItem(text = { Text("Delete" ) },
-                                leadingIcon = { Icon(imageVector = Icons.Default.Delete,
-                                    contentDescription = "",
-                                    tint=Color.Red)},
-                                onClick = {
-                                    onEvent(ExerciseRecordEvent.ShowDeleteDialog(exercise.id))
-                                    isContextDialogVisible = false
-                                })
-                        }
                         Column(
                             modifier = Modifier.weight(0.9f)
                         ) {
@@ -260,6 +241,30 @@ fun MainScreen (
                                     fontSize = 16.sp
                                 )
                             }
+                        }
+                        Log.d("TESTDEBUG", "offset${pressOffset.y} ${pressOffset.x}")
+                        Log.d("TESTDEBUG", "height$itemHeight")
+                        DropdownMenu(
+                            expanded = isContextDialogVisible,
+                            onDismissRequest = {
+                                isContextDialogVisible = false
+                            },
+                            offset = pressOffset.copy(
+                                y = pressOffset.y - itemHeight
+                            ),
+                        ) {
+                            DropdownMenuItem(text = { Text("Delete") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "",
+                                        tint = Color.Red
+                                    )
+                                },
+                                onClick = {
+                                    onEvent(ExerciseRecordEvent.ShowDeleteDialog(exercise.id))
+                                    isContextDialogVisible = false
+                                })
                         }
                     }
 
