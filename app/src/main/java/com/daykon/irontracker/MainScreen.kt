@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -114,9 +115,10 @@ fun MainScreen (
                 shape = RoundedCornerShape(100),
                 leadingIcon = {Icon(Icons.Filled.Search, contentDescription = null)}
             )
-            LazyColumn(contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 64.dp),
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+                contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 64.dp)
             ) {
 
                 items(state.exercises.filter {
@@ -215,7 +217,7 @@ fun MainScreen (
                                 itemHeight = with(density) { it.height.toDp() }
                             }
                             .indication(interactionSource, rememberRipple())
-
+                            .padding(PaddingValues(4.dp, 8.dp, 8.dp, 8.dp))
                     ) {
                         Column(
                             modifier = Modifier.weight(0.9f)
@@ -276,9 +278,9 @@ fun MainScreen (
                             DropdownMenuItem(text = { Text("Delete") },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Default.Delete,
+                                        imageVector = Icons.Outlined.Delete,
                                         contentDescription = "",
-                                        tint = Color.Red
+                                        tint = Color(0xffcc0000)
                                     )
                                 },
                                 onClick = {
