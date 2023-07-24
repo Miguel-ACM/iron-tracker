@@ -107,6 +107,10 @@ fun Graph(
 
             var minValueInt: Int = minValue.roundToInt()
             var maxValueInt: Int = maxValue.roundToInt()
+            if (minValueInt == maxValueInt) {
+                minValueInt -= 1
+                maxValueInt += 1
+            }
             var reduceMin = true
             val divisionValue = if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
                 200
