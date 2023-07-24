@@ -16,10 +16,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -79,6 +79,10 @@ fun MainScreen (
     val scope = rememberCoroutineScope()
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    var navigating by remember {
+        mutableStateOf(false)
+    }
 
     Drawer(isSelected = 0,
            drawerState = drawerState
@@ -151,13 +155,15 @@ fun MainScreen (
                     leadingIcon = {Icon(Icons.Filled.Search, contentDescription = null)}
                 )
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
-                    contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 64.dp)
+
                 ) {
 
-                    items(state.exercises.filter {
+                    state.exercises.filter {
                         var muscleGroup = MuscleGroup(
                             name = "?",
                             color = 0x00ff00,
@@ -176,7 +182,7 @@ fun MainScreen (
                                 muscleGroup.name.contains(state.searchTerm, ignoreCase = true)  ||
                                 muscleGroup.extraSearch.contains(state.searchTerm, ignoreCase = true)  ||
                                 it.name.contains(state.searchTerm, ignoreCase = true)
-                    }) { exercise ->
+                    }.forEach() { exercise ->
                         var muscleGroup = MuscleGroup(
                             name = "?",
                             color = 0x00ff00,
@@ -241,8 +247,17 @@ fun MainScreen (
                                             if (!state.isAddingExerciseRecord && !state.isAddingExercise) {
                                                 val press = PressInteraction.Press(it)
                                                 interactionSource.tryEmit(press)
-                                                interactionSource.tryEmit(PressInteraction.Release(press))
-                                                navController.navigate("graph/${exercise.id}")
+                                                interactionSource.tryEmit(
+                                                    PressInteraction.Release(
+                                                        press
+                                                    )
+                                                )
+
+                                                if (!navigating) {
+                                                    navigating = true
+                                                    navController.navigate("graph/${exercise.id}")
+                                                }
+
                                             }
                                         }
                                     )

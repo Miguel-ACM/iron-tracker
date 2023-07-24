@@ -293,7 +293,6 @@ fun GraphScreen (
     val onEvent = graphViewModel::onEvent
     val state = graphViewModel.state.collectAsState()
 
-    Log.d("TESTDEBUG", "exercise_id$exerciseId")
     onEvent(GraphEvent.SetExerciseId(exerciseId.toInt()))
     Scaffold { padding ->
         Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))){
