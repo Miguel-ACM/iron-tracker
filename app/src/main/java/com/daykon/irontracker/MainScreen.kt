@@ -1,6 +1,5 @@
 package com.daykon.irontracker
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -294,14 +293,16 @@ fun MainScreen (
                                 Box(
                                     contentAlignment = Alignment.Center
                                 ) {
+                                    var text = ""
+                                    if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0){
+                                        text = "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
+                                    }
                                     Text(
-                                        text = "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg",
+                                        text = text,
                                         fontSize = 16.sp
                                     )
                                 }
                             }
-                            Log.d("TESTDEBUG", "offset${pressOffset.y} ${pressOffset.x}")
-                            Log.d("TESTDEBUG", "height$itemHeight")
                             DropdownMenu(
                                 expanded = isContextDialogVisible,
                                 onDismissRequest = {
