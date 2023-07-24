@@ -98,7 +98,27 @@ fun MainScreen (
             },
             topBar = {
                 TopAppBar(title = {
-
+                    TextField(
+                        value = state.searchTerm,
+                        singleLine = true,
+                        onValueChange = {
+                            onEvent(ExerciseRecordEvent.UpdateSearch(it))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(PaddingValues(0.dp, 8.dp, 0.dp, 8.dp)),
+                        placeholder = {
+                            Text(text = "Search exercise or muscle")
+                        },
+                        colors = TextFieldDefaults.textFieldColors(
+                            disabledTextColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        shape = RoundedCornerShape(100),
+                        leadingIcon = {Icon(Icons.Filled.Search, contentDescription = null)}
+                    )
                 },
                     navigationIcon = {
                         IconButton(onClick = {
@@ -133,27 +153,7 @@ fun MainScreen (
 
             Column(modifier = Modifier.padding(PaddingValues(8.dp, 64.dp, 8.dp, 0.dp))) {
 
-                TextField(
-                    value = state.searchTerm,
-                    singleLine = true,
-                    onValueChange = {
-                        onEvent(ExerciseRecordEvent.UpdateSearch(it))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PaddingValues(0.dp, 0.dp, 0.dp, 8.dp)),
-                    placeholder = {
-                        Text(text = "Search exercise or muscle")
-                    },
-                    colors = TextFieldDefaults.textFieldColors(
-                        disabledTextColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
-                    shape = RoundedCornerShape(100),
-                    leadingIcon = {Icon(Icons.Filled.Search, contentDescription = null)}
-                )
+
 
                 Column(
                     modifier = Modifier
