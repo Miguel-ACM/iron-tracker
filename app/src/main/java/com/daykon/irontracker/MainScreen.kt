@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.daykon.irontracker.db.ExerciseRecord
 import com.daykon.irontracker.db.ExerciseRecordEvent
 import com.daykon.irontracker.db.ExerciseState
@@ -73,7 +74,8 @@ import kotlin.math.roundToInt
 @Composable
 fun MainScreen (
     state: ExerciseState,
-    onEvent: (ExerciseRecordEvent) -> Unit
+    onEvent: (ExerciseRecordEvent) -> Unit,
+    navController: NavController
     ) {
     val scope = rememberCoroutineScope()
 
@@ -199,7 +201,6 @@ fun MainScreen (
                         )
                         i = 0
                         while (i < state.exerciseRecords.size) {
-                            Log.d("AYY", exercise.id.toString() + "|" + state.exerciseRecords[i].toString())
                             if (state.exerciseRecords[i].exerciseId == exercise.id) {
                                 latestRecord = state.exerciseRecords[i]
                                 break
@@ -239,10 +240,10 @@ fun MainScreen (
                                         onTap = {
 
                                             if (!state.isAddingExerciseRecord && !state.isAddingExercise) {
-                                                onEvent(ExerciseRecordEvent.ShowGraph(exercise.id))
                                                 val press = PressInteraction.Press(it)
                                                 interactionSource.tryEmit(press)
                                                 interactionSource.tryEmit(PressInteraction.Release(press))
+                                                navController.navigate("graph/${exercise.id}")
                                             }
                                         }
                                     )

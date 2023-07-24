@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GraphViewModel (
-    exerciseDao: ExerciseDao,
+    private val exerciseDao: ExerciseDao,
     private val exerciseRecordDao: ExerciseRecordDao,
     exerciseId: Int
     ): ViewModel() {
@@ -27,13 +27,9 @@ class GraphViewModel (
     private val _exerciseRecords = exerciseRecordDao.getAllExerciseRecordsForExercise(exerciseId)
     private val _exerciseWithMuscleGroup = exerciseDao.getExerciseWithMuscleGroup(exerciseId)
 
-
-
-
     val state = combine(_state, _exerciseRecords, _exerciseWithMuscleGroup) { state,
-                                                                                 exerciseRecords,
-                                                                                 exercise,
-                                                                                  ->
+                                                                              exerciseRecords,
+                                                                              exercise ->
         state.copy(
             exerciseRecords = exerciseRecords,
             exercise = exercise,
@@ -72,6 +68,13 @@ class GraphViewModel (
                         startDate = startDateTime,
                         endDate = endDateTime
                     )
+                }
+            }
+
+            is GraphEvent.SetExerciseId -> {
+                viewModelScope.launch {
+                    exerciseRecordDao.getAllExerciseRecordsForExercise(event.exerciseId)
+                    exerciseDao.getExerciseWithMuscleGroup(event.exerciseId)
                 }
             }
         }
