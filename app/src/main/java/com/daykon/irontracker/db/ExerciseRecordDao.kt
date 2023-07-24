@@ -17,6 +17,9 @@ interface ExerciseRecordDao {
     @Query("SELECT * FROM exerciseRecord WHERE exerciseId = :exerciseId AND date BETWEEN :startDate AND :endDate ORDER BY date ASC")
     fun getExerciseRecordsBetweenDates(exerciseId: Int, startDate: LocalDateTime, endDate: LocalDateTime): Flow<List<ExerciseRecord>>
 
+    @Query("SELECT * FROM exerciseRecord WHERE exerciseId = :exerciseId AND date BETWEEN :startDate AND :endDate ORDER BY date ASC")
+    fun getExerciseRecordsBetweenDatesNoFlow(exerciseId: Int, startDate: LocalDateTime, endDate: LocalDateTime): List<ExerciseRecord>
+
     @Query("SELECT * FROM exerciseRecord ORDER BY date DESC")
     fun getAllExerciseRecords(): Flow<List<ExerciseRecord>>
 

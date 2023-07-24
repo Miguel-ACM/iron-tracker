@@ -24,4 +24,8 @@ interface ExerciseDao {
     @Transaction
     @Query("SELECT * FROM Exercise WHERE id = :id")
     fun getExerciseWithMuscleGroup(id: Int): Flow<ExerciseWithMuscleGroup>
+
+    @Transaction
+    @Query("SELECT * FROM Exercise WHERE id = :id")
+    fun getExerciseWithMuscleGroupNoFlow(id: Int): ExerciseWithMuscleGroup
 }

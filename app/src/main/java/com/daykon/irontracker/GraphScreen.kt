@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -41,9 +42,10 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.ExerciseRecord
 import com.daykon.irontracker.db.GraphEvent
-import com.daykon.irontracker.db.GraphState
+import com.daykon.irontracker.db.GraphViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -280,10 +282,14 @@ fun Graph(
 @ExperimentalMaterial3Api
 @Composable
 fun GraphScreen (
-    state: GraphState,
-    onEvent: (GraphEvent) -> Unit,
+    db: Database,
     exerciseId: String = "0"
     ) {
+    val graphViewModel = GraphViewModel(db.exerciseDao,db.exerciseRecordDao, exerciseId.toInt())
+    val onEvent = graphViewModel::onEvent
+    val state = graphViewModel.state.collectAsState()
+
+    Log.d("TESTDEBUG", "exercise_id$exerciseId")
     onEvent(GraphEvent.SetExerciseId(exerciseId.toInt()))
     Scaffold { padding ->
         Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))){
@@ -292,10 +298,10 @@ fun GraphScreen (
                 ElevatedCard(modifier = Modifier.wrapContentSize(),
 
                              shape= CutCornerShape(15,0,15,0),
-                             colors=CardDefaults.cardColors(containerColor = Color(state.exercise.muscleGroup.color))) {
+                             colors=CardDefaults.cardColors(containerColor = Color(state.value.exercise.muscleGroup.color))) {
                     Box (contentAlignment = Alignment.Center,
                     modifier = Modifier.wrapContentSize().fillMaxWidth()){
-                        Text(state.exercise.exercise.name,
+                        Text(state.value.exercise.exercise.name,
                              style = MaterialTheme.typography.headlineSmall,
                              modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
                              color = MaterialTheme.colorScheme.background,
@@ -307,11 +313,11 @@ fun GraphScreen (
             Row(horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth().padding(PaddingValues(0.dp, 8.dp, 0.dp,0.dp))) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(state.exercise.muscleGroup.name)
+                    Text(state.value.exercise.muscleGroup.name)
                 }
             }
             Row(modifier = Modifier.fillMaxSize().weight(1f)) {
-                if (state.exerciseRecords.size < 2){
+                if (state.value.exerciseRecords.size < 2){
                     Box (modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
                     contentAlignment = Alignment.Center
                     ) {
@@ -319,11 +325,11 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.exerciseRecords, "weight", color = Color(state.exercise.muscleGroup.color))
+                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color))
                 }
             }
             Row(modifier = Modifier.fillMaxSize().weight(1f)) {
-                if (state.exerciseRecords.size < 2){
+                if (state.value.exerciseRecords.size < 2){
                     Box (modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
                         contentAlignment = Alignment.Center
                     ) {
@@ -331,7 +337,7 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.exerciseRecords, "reps", color = Color(state.exercise.muscleGroup.color))
+                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color))
                 }
             }
         }

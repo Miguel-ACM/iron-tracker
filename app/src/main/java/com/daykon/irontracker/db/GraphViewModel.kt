@@ -1,8 +1,12 @@
 package com.daykon.irontracker.db
 
+import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -24,7 +28,8 @@ class GraphViewModel (
     private var startDateTime: LocalDateTime = LocalDateTime.now().minusYears(10)
     private var endDateTime: LocalDateTime = LocalDateTime.now().plusYears(1)
 
-    private val _exerciseRecords = exerciseRecordDao.getAllExerciseRecordsForExercise(exerciseId)
+    private val _exerciseRecords = exerciseRecordDao.getAllExerciseRecordsForExercise(exerciseId
+    )
     private val _exerciseWithMuscleGroup = exerciseDao.getExerciseWithMuscleGroup(exerciseId)
 
     val state = combine(_state, _exerciseRecords, _exerciseWithMuscleGroup) { state,
@@ -36,6 +41,7 @@ class GraphViewModel (
 
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), GraphState())
+
 
     fun onEvent(event: GraphEvent) {
         when (event) {
@@ -72,10 +78,31 @@ class GraphViewModel (
             }
 
             is GraphEvent.SetExerciseId -> {
-                viewModelScope.launch {
-                    exerciseRecordDao.getAllExerciseRecordsForExercise(event.exerciseId)
-                    exerciseDao.getExerciseWithMuscleGroup(event.exerciseId)
+                Log.d("TESTDEBUG" , "IN SET EXERCISE ID")
+
+
+                viewModelScope.launch (Dispatchers.IO){
+                    val e = exerciseDao.getExerciseWithMuscleGroupNoFlow(event.exerciseId)
+                    val er = exerciseRecordDao.getExerciseRecordsBetweenDatesNoFlow(
+                        exerciseId = event.exerciseId,
+                        startDate = startDateTime,
+                        endDate = endDateTime
+                    )
+                    Log.d("TESTDEBUG", "he actualizado el estado...")
+                    _state.update {
+
+                        it.copy(
+                            exerciseId = event.exerciseId,
+                            exercise = e,
+                            exerciseRecords = er
+
+                            )
+                    }
                 }
+
+
+
+
             }
         }
     }
