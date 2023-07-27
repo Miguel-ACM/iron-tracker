@@ -9,6 +9,7 @@ data class ExerciseState(
     val exerciseColor: String = "",
     val maxReps: Float = 2f,
     val maxWeight: String = "",
+    val maxWeightFloat: Float = 0f,
     val exerciseId: Int = 0,
     val searchTerm: String = "",
     val newExerciseMuscleGroupId: Int = 0,

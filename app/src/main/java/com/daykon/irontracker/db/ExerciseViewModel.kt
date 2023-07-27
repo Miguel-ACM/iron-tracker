@@ -13,8 +13,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
+import java.text.DecimalFormat
 
-
+fun roundOffDecimal(number: Float): String? {
+    val df = DecimalFormat("#.##")
+    return df.format(number)
+}
 class Action(val value: Int, _args: Map<String, String>) {
     companion object Action {
         const val NONE = 0
@@ -91,20 +95,20 @@ class ExerciseViewModel (
             }
 
             is ExerciseRecordEvent.ShowExerciseRecordDialog -> {
-                val maxWeight = event.exerciseRecord.weight.roundToInt()
+                val maxWeight = event.exerciseRecord.weight
 
                 val maxWeightString =
-                    if (maxWeight == 0) {
+                    if (maxWeight <= 0f) {
                         ""
                     } else {
-                        maxWeight.toString()
+                        roundOffDecimal(maxWeight)
                     }
 
                     _state.update {
                         it.copy(
                             exerciseId = event.exercise.id,
                             maxReps = event.exerciseRecord.reps.toFloat(),
-                            maxWeight = maxWeightString,
+                            maxWeight = maxWeightString ?: "",
                             isAddingExerciseRecord = true
                         )
                     }
