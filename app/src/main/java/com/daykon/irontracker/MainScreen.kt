@@ -1,6 +1,7 @@
 package com.daykon.irontracker
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -33,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -183,7 +186,7 @@ fun MainScreen (
                             exerciseId = 0,
                             weight = 0f,
                             reps = 0,
-                            date = LocalDateTime.now()
+                            date = LocalDateTime.now().minusYears(1)
                         )
                         i = 0
                         while (i < state.exerciseRecords.size) {
@@ -206,6 +209,10 @@ fun MainScreen (
                         }
                         val density = LocalDensity.current
                         val interactionSource = remember { MutableInteractionSource() }
+                        val isToday = (LocalDateTime.now().dayOfMonth ==  latestRecord.date.dayOfMonth
+                                && LocalDateTime.now().month ==  latestRecord.date.month
+                                && LocalDateTime.now().year ==  latestRecord.date.year)
+
 
                         Row(
                             modifier = Modifier
@@ -280,22 +287,29 @@ fun MainScreen (
                                     Text(text = muscleGroup.name, fontSize = 12.sp)
                                 }
                             }
+
                             Column(
-                                modifier = Modifier
-                                    .weight(1f)
+                                modifier = Modifier.weight(1f)
                                     .fillMaxHeight()
+                                    .background( if (isToday) Color(muscleGroup.color) else Color(0x00000000),
+                                        shape = RoundedCornerShape(size = 16.dp)
+                                    )
+
 
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     var text = ""
-                                    if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0){
-                                        text = "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
+                                    if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0) {
+                                        text =
+                                            "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
                                     }
                                     Text(
                                         text = text,
-                                        fontSize = 16.sp
+                                        fontSize = 16.sp,
+                                        color = if (isToday) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onBackground
                                     )
                                 }
                             }
