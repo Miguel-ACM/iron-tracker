@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
@@ -37,14 +35,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -98,27 +95,8 @@ fun MainScreen (
             },
             topBar = {
                 TopAppBar(title = {
-                    TextField(
-                        value = state.searchTerm,
-                        singleLine = true,
-                        onValueChange = {
-                            onEvent(ExerciseRecordEvent.UpdateSearch(it))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(PaddingValues(0.dp, 8.dp, 0.dp, 8.dp)),
-                        placeholder = {
-                            Text(text = "Search exercise or muscle")
-                        },
-                        colors = TextFieldDefaults.textFieldColors(
-                            disabledTextColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        ),
-                        shape = RoundedCornerShape(100),
-                        leadingIcon = {Icon(Icons.Filled.Search, contentDescription = null)}
-                    )
+                    ExpandableSearchView(state, onEvent)
+
                 },
                     navigationIcon = {
                         IconButton(onClick = {
@@ -155,15 +133,15 @@ fun MainScreen (
 
 
 
-                Column(
+                LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .fillMaxSize(),
+                        //.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
 
                 ) {
 
-                    state.exercises.filter {
+                    items(state.exercises.filter {
                         var muscleGroup = MuscleGroup(
                             name = "?",
                             color = 0x00ff00,
@@ -182,7 +160,10 @@ fun MainScreen (
                                 muscleGroup.name.contains(state.searchTerm, ignoreCase = true)  ||
                                 muscleGroup.extraSearch.contains(state.searchTerm, ignoreCase = true)  ||
                                 it.name.contains(state.searchTerm, ignoreCase = true)
-                    }.forEach() { exercise ->
+                    }) { exercise ->
+
+                        val currentExercise = rememberUpdatedState(exercise)
+
                         var muscleGroup = MuscleGroup(
                             name = "?",
                             color = 0x00ff00,
@@ -229,7 +210,7 @@ fun MainScreen (
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .pointerInput(true) {
+                                .pointerInput(currentExercise) {
                                     detectTapGestures(
                                         onLongPress = {
 
@@ -255,7 +236,7 @@ fun MainScreen (
 
                                                 if (!navigating) {
                                                     navigating = true
-                                                    navController.navigate("graph/${exercise.id}")
+                                                    navController.navigate("graph/${currentExercise.value.id}")
                                                 }
 
                                             }
