@@ -59,14 +59,6 @@ fun AddExerciseRecordDialog(
                     }
                 )
                 Text("Reps")
-                Slider(value = state.maxReps,
-                    onValueChange = {
-                        onEvent(ExerciseRecordEvent.SetReps(it))
-                        sliderValue = it
-                    },
-                    valueRange = 1f..20f,
-                    steps = 18
-                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -76,6 +68,15 @@ fun AddExerciseRecordDialog(
                 ) {
                     Text(text = state.maxReps.roundToInt().toString())
                 }
+                Slider(value = state.maxReps,
+                    onValueChange = {
+                        onEvent(ExerciseRecordEvent.SetReps(it))
+                        sliderValue = it
+                    },
+                    valueRange = 1f..20f,
+                    steps = 18
+                )
+
                 //DropdownMenu(expanded = expanded,
                 //    onDismissRequest = { onEvent(ExerciseRecordEvent.HideDialog) }) {
                 //    state.exercises.forEach { exercise ->
