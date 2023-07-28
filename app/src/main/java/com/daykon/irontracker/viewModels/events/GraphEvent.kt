@@ -1,4 +1,4 @@
-package com.daykon.irontracker.db
+package com.daykon.irontracker.viewModels.events
 
 import java.time.LocalDateTime
 

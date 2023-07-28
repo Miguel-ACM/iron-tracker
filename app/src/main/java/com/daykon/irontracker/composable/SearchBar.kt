@@ -1,4 +1,4 @@
-package com.daykon.irontracker
+package com.daykon.irontracker.composable
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -25,19 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import com.daykon.irontracker.db.ExerciseRecordEvent
-import com.daykon.irontracker.db.ExerciseState
+import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
+import com.daykon.irontracker.viewModels.state.ExerciseState
 
 @Composable
 fun ExpandableSearchView(
     state: ExerciseState,
     onEvent: (ExerciseRecordEvent) -> Unit,
-    onSearchDisplayChanged: (String) -> Unit = {},
-    onSearchDisplayClosed: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onSearchDisplayClosed: () -> Unit = {},
     expandedInitially: Boolean = false,
     //tint: Color = MaterialTheme.colors.onPrimary
 ) {
@@ -51,7 +49,6 @@ fun ExpandableSearchView(
             true -> ExpandedSearchView(
                 state = state,
                 onEvent = onEvent,
-                onSearchDisplayChanged = onSearchDisplayChanged,
                 onSearchDisplayClosed = onSearchDisplayClosed,
                 onExpandedChanged = onExpandedChanged,
                 modifier = modifier,
@@ -106,14 +103,11 @@ fun CollapsedSearchView(
 fun ExpandedSearchView(
     state: ExerciseState,
     onEvent: (ExerciseRecordEvent) -> Unit,
-    onSearchDisplayChanged: (String) -> Unit,
     onSearchDisplayClosed: () -> Unit,
     onExpandedChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     //tint: Color = MaterialTheme.colors.onPrimary,
 ) {
-    val focusManager = LocalFocusManager.current
-
     val textFieldFocusRequester = remember { FocusRequester() }
 
     SideEffect {

@@ -1,4 +1,4 @@
-package com.daykon.irontracker
+package com.daykon.irontracker.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -57,9 +57,14 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.daykon.irontracker.composable.AddExerciseDialog
+import com.daykon.irontracker.composable.AddExerciseRecordDialog
+import com.daykon.irontracker.composable.DeleteDialog
+import com.daykon.irontracker.composable.Drawer
+import com.daykon.irontracker.composable.ExpandableSearchView
 import com.daykon.irontracker.db.ExerciseRecord
-import com.daykon.irontracker.db.ExerciseRecordEvent
-import com.daykon.irontracker.db.ExerciseState
+import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
+import com.daykon.irontracker.viewModels.state.ExerciseState
 import com.daykon.irontracker.db.MuscleGroup
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime

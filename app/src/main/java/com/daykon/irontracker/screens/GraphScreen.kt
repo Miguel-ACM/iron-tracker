@@ -1,4 +1,4 @@
-package com.daykon.irontracker
+package com.daykon.irontracker.screens
 
 import android.content.res.Configuration
 import android.graphics.PointF
@@ -44,8 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.ExerciseRecord
-import com.daykon.irontracker.db.GraphEvent
-import com.daykon.irontracker.db.GraphViewModel
+import com.daykon.irontracker.viewModels.GraphViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit

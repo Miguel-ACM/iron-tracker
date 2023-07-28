@@ -1,4 +1,8 @@
-package com.daykon.irontracker.db
+package com.daykon.irontracker.viewModels.state
+
+import com.daykon.irontracker.db.Exercise
+import com.daykon.irontracker.db.ExerciseRecord
+import com.daykon.irontracker.db.MuscleGroup
 
 data class ExerciseState(
     val exercises: List<Exercise> = emptyList(),

@@ -1,4 +1,7 @@
-package com.daykon.irontracker.db
+package com.daykon.irontracker.viewModels.events
+
+import com.daykon.irontracker.db.Exercise
+import com.daykon.irontracker.db.ExerciseRecord
 
 sealed interface ExerciseRecordEvent {
     object SaveExerciseRecord: ExerciseRecordEvent
@@ -7,7 +10,8 @@ sealed interface ExerciseRecordEvent {
     data class SetExerciseId(val id: Int): ExerciseRecordEvent
     data class SetReps(val reps: Float): ExerciseRecordEvent
     data class SetMaxWeight(val maxWeight: String): ExerciseRecordEvent
-    data class ShowExerciseRecordDialog(val exercise: Exercise, val exerciseRecord: ExerciseRecord): ExerciseRecordEvent
+    data class ShowExerciseRecordDialog(val exercise: Exercise, val exerciseRecord: ExerciseRecord):
+        ExerciseRecordEvent
     data class ShowDeleteDialog(val exerciseId: Int): ExerciseRecordEvent
     object HideDeleteDialog: ExerciseRecordEvent
     data class DeleteExercise(val exercise: Exercise): ExerciseRecordEvent
@@ -15,7 +19,6 @@ sealed interface ExerciseRecordEvent {
     object HideExerciseRecordDialog: ExerciseRecordEvent
     object ShowExerciseDialog: ExerciseRecordEvent
     object HideExerciseDialog: ExerciseRecordEvent
-    data class ShowGraph(val id: Int): ExerciseRecordEvent
     data class UpdateSearch(val term: String): ExerciseRecordEvent
 
     //data class SetRecordEvent(val ):

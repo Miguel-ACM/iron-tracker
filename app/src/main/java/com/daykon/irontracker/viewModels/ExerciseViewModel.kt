@@ -1,9 +1,15 @@
-package com.daykon.irontracker.db
+package com.daykon.irontracker.viewModels
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.daykon.irontracker.db.Exercise
+import com.daykon.irontracker.db.ExerciseDao
+import com.daykon.irontracker.db.ExerciseRecord
+import com.daykon.irontracker.db.ExerciseRecordDao
+import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
+import com.daykon.irontracker.viewModels.state.ExerciseState
+import com.daykon.irontracker.db.MuscleGroupDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,15 +25,7 @@ fun roundOffDecimal(number: Float): String? {
     val df = DecimalFormat("#.##")
     return df.format(number)
 }
-class Action(val value: Int, _args: Map<String, String>) {
-    companion object Action {
-        const val NONE = 0
-        const val SHOW_GRAPH = 1
-    }
 
-    var args: Map<String, String> = _args
-
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExerciseViewModel (
@@ -50,8 +48,6 @@ class ExerciseViewModel (
             muscleGroups = muscleGroups
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseState())
-
-    val mAction: MutableLiveData<Action> = MutableLiveData<Action>()
 
     fun onEvent(event: ExerciseRecordEvent) {
         Log.d("INFO", "EVENT")
@@ -138,11 +134,6 @@ class ExerciseViewModel (
                         maxReps = event.reps
                     )
                 }
-            }
-
-            is ExerciseRecordEvent.ShowGraph -> {
-                mAction.setValue(Action(Action.SHOW_GRAPH, mapOf("exerciseId" to event.id.toString())))
-                mAction.setValue(Action(Action.NONE, mapOf("exerciseIdj" to event.id.toString())))
             }
 
             is ExerciseRecordEvent.UpdateSearch -> {

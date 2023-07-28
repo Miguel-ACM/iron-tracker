@@ -1,7 +1,7 @@
-package com.daykon.irontracker
+package com.daykon.irontracker.composable
 
 import android.widget.Toast
-import com.daykon.irontracker.db.ExerciseState
+import com.daykon.irontracker.viewModels.state.ExerciseState
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daykon.irontracker.db.ExerciseRecordEvent
+import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
