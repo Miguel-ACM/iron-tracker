@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.daykon.irontracker.db.Database
+import com.daykon.irontracker.screens.CameraScreen
 import com.daykon.irontracker.viewModels.ExerciseViewModel
 import com.daykon.irontracker.screens.GraphScreen
 import com.daykon.irontracker.screens.MainScreen
@@ -65,6 +66,11 @@ class MainActivity : ComponentActivity() {
                         enterTransition = {slideIn(initialOffset = { IntOffset(it.width, 0) }) },
                         exitTransition = {slideOut(targetOffset = { IntOffset(it.width, 0)  }) }) {
                         GraphScreen(db = db, exerciseId = it.arguments?.getString("exerciseId") ?: "1")
+                    }
+                    composable("camera",
+                        enterTransition = {slideIn(initialOffset = { IntOffset(it.width, 0) }) },
+                        exitTransition = {slideOut(targetOffset = { IntOffset(-it.width, 0)  }) }) {
+                        CameraScreen()
 
                     }
                 }

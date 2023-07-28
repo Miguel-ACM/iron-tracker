@@ -16,14 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.daykon.irontracker.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerItem(text: String,
-               icon: ImageVector,
+               icon:  @Composable () -> Unit,
                onClick: () -> Unit,
                drawerState: DrawerState,
                isSelected: Boolean = false,
@@ -31,7 +32,7 @@ fun DrawerItem(text: String,
     val scope = rememberCoroutineScope()
 
     NavigationDrawerItem(
-        icon = { Icon(icon, contentDescription = null) },
+        icon = icon,
         label = { Text(text) },
         selected = isSelected,
         onClick = {
@@ -50,7 +51,21 @@ fun Drawer (isSelected: Int, drawerState: DrawerState, content: @Composable () -
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
                 DrawerItem(text = "Home",
-                    icon = Icons.Default.Home,
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    onClick = {  },
+                    drawerState = drawerState,
+                    isSelected = isSelected == 0)
+                Spacer(Modifier.height(12.dp))
+                DrawerItem(text = "Progress Pics",
+                    icon = { Icon(painterResource(id = R.drawable.photo_camera_black_24dp),
+                        contentDescription = null) },
+                    onClick = {  },
+                    drawerState = drawerState,
+                    isSelected = isSelected == 0)
+                Spacer(Modifier.height(12.dp))
+                DrawerItem(text = "Weight",
+                    icon = { Icon(painterResource(id = R.drawable.monitor_weight_black_24dp),
+                        contentDescription = null) },
                     onClick = {  },
                     drawerState = drawerState,
                     isSelected = isSelected == 0)
