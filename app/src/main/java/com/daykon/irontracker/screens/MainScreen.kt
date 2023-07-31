@@ -304,7 +304,8 @@ fun MainScreen (
 
                             ) {
                                 Box(
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
                                 ) {
                                     var text = ""
                                     if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0) {
