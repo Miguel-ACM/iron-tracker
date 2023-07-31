@@ -1,5 +1,6 @@
 package com.daykon.irontracker.composable
 
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.daykon.irontracker.R
 import kotlinx.coroutines.launch
 
@@ -36,7 +38,9 @@ fun DrawerItem(text: String,
         label = { Text(text) },
         selected = isSelected,
         onClick = {
-            scope.launch { drawerState.close() }
+            scope.launch { drawerState.close()
+            onClick()
+            }
         },
         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
     )
@@ -44,7 +48,9 @@ fun DrawerItem(text: String,
 
 @ExperimentalMaterial3Api
 @Composable
-fun Drawer (isSelected: Int, drawerState: DrawerState, content: @Composable () -> Unit) {
+fun Drawer (isSelected: Int, drawerState: DrawerState,
+            navController: NavController,
+            content: @Composable () -> Unit) {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -59,7 +65,8 @@ fun Drawer (isSelected: Int, drawerState: DrawerState, content: @Composable () -
                 DrawerItem(text = "Progress Pics",
                     icon = { Icon(painterResource(id = R.drawable.photo_camera_black_24dp),
                         contentDescription = null) },
-                    onClick = {  },
+                    onClick = { Log.d("TESTDEBUG", "progress")
+                        navController.navigate("progress") },
                     drawerState = drawerState,
                     isSelected = isSelected == 0)
                 Spacer(Modifier.height(12.dp))

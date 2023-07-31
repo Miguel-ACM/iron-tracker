@@ -90,7 +90,8 @@ fun MainScreen (
     }
 
     Drawer(isSelected = 0,
-           drawerState = drawerState
+           drawerState = drawerState,
+           navController = navController
     ) {
         Scaffold(
             floatingActionButton = {

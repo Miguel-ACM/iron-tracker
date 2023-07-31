@@ -24,7 +24,6 @@ import com.daykon.irontracker.screens.GraphScreen
 import com.daykon.irontracker.screens.MainScreen
 import com.daykon.irontracker.ui.theme.IronTrackerTheme
 
-
 class MainActivity : ComponentActivity() {
 
     private val db by lazy {
@@ -32,7 +31,7 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             Database::class.java,
             "ironTracker.db"
-        ).createFromAsset("ironTracker.db").build()
+        ).build()//.createFromAsset("ironTracker.db").build()
     }
 
     private val exerciseViewModel by viewModels<ExerciseViewModel>(
@@ -67,10 +66,10 @@ class MainActivity : ComponentActivity() {
                         exitTransition = {slideOut(targetOffset = { IntOffset(it.width, 0)  }) }) {
                         GraphScreen(db = db, exerciseId = it.arguments?.getString("exerciseId") ?: "1")
                     }
-                    composable("camera",
+                    composable("progress",
                         enterTransition = {slideIn(initialOffset = { IntOffset(it.width, 0) }) },
                         exitTransition = {slideOut(targetOffset = { IntOffset(-it.width, 0)  }) }) {
-                        CameraScreen()
+                        CameraScreen(db = db, navController = navController)
 
                     }
                 }
