@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             Database::class.java,
             "ironTracker.db"
-        ).build()//.createFromAsset("ironTracker.db").build()
+        ).createFromAsset("ironTracker.db").build()
     }
 
     private val exerciseViewModel by viewModels<ExerciseViewModel>(

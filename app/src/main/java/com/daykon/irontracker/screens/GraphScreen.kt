@@ -83,7 +83,7 @@ fun Graph(
     val minutesBetween = ChronoUnit.MINUTES.between(minDate, maxDate)
     val dateTimeFormatterMonth: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM")
     val dateTimeFormatterYear: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yy")
-
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
     Box(
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 12.dp),
@@ -137,13 +137,14 @@ fun Graph(
 
 
             /** placing x axis points */
+
             var j = 0
             while (j < numMarksX + 1) {
                 val measuredText: TextLayoutResult = textMeasurer.measure(AnnotatedString(formatTime(j)))
                 drawText(textMeasurer, formatTime(j),
                     Offset(xAxisSpace / numMarksX * (j) - measuredText.getLineRight(0) / 2 + paddingX0.toPx(),
                         screenHeight - 50),
-                    style = TextStyle.Default.copy(color = Color.White)
+                    style = TextStyle.Default.copy(color = onBackgroundColor)
                 )
                 j += 1
             }
@@ -158,7 +159,7 @@ fun Graph(
                     Offset(0f,
                         screenHeight - yAxisSpace / numMarksY * (j) -
                             measuredText.getLineBottom(0) - paddingY0.toPx()),
-                    style = TextStyle.Default.copy(color = Color.White)
+                    style = TextStyle.Default.copy(color = onBackgroundColor)
                 )
                 j += 1
             }
@@ -175,7 +176,7 @@ fun Graph(
                 title,
                 Offset(xAxisSpace - measuredText.getLineRight(0) + paddingX0.toPx() ,
                     yAxisSpace - paddingY1.toPx()),
-                style = TextStyle.Default.copy(color = Color.White)
+                style = TextStyle.Default.copy(color = onBackgroundColor)
             )
 
             fun getXYValuesRecord(record: ExerciseRecord): Array<Float>{
@@ -269,7 +270,7 @@ fun Graph(
                 )
                 drawPath(
                     axis,
-                    color = Color.White,
+                    color = onBackgroundColor,
                     style = Stroke(
                         width = 5f,
                         cap = StrokeCap.Square
@@ -301,7 +302,9 @@ fun GraphScreen (
                              shape= CutCornerShape(15,0,15,0),
                              colors=CardDefaults.cardColors(containerColor = Color(state.value.exercise.muscleGroup.color))) {
                     Box (contentAlignment = Alignment.Center,
-                    modifier = Modifier.wrapContentSize().fillMaxWidth()){
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .fillMaxWidth()){
                         Text(state.value.exercise.exercise.name,
                              style = MaterialTheme.typography.headlineSmall,
                              modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
@@ -312,14 +315,20 @@ fun GraphScreen (
 
             }
             Row(horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth().padding(PaddingValues(0.dp, 8.dp, 0.dp,0.dp))) {
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PaddingValues(0.dp, 8.dp, 0.dp, 0.dp))) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(state.value.exercise.muscleGroup.name)
                 }
             }
-            Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+            Row(modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)) {
                 if (state.value.exerciseRecords.size < 2){
-                    Box (modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
+                    Box (modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.CenterVertically),
                     contentAlignment = Alignment.Center
                     ) {
                         Text("Weight: Not enough records yet", textAlign = TextAlign.Center)
@@ -329,9 +338,13 @@ fun GraphScreen (
                     Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color))
                 }
             }
-            Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+            Row(modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)) {
                 if (state.value.exerciseRecords.size < 2){
-                    Box (modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
+                    Box (modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.CenterVertically),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("Reps: Not enough records yet", textAlign = TextAlign.Center)
