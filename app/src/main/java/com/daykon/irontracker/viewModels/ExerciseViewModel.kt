@@ -63,7 +63,7 @@ class ExerciseViewModel (
             ExerciseRecordEvent.SaveExerciseRecord -> {
                 val exerciseId: Int = state.value.exerciseId
                 val maxReps: Float = state.value.maxReps
-                val maxWeight: String = state.value.maxWeight
+                val maxWeight: String = state.value.maxWeight.replace(",", ".")
 
                 if (maxReps < 0.6f || maxWeight.toFloatOrNull() == null){
                     return
