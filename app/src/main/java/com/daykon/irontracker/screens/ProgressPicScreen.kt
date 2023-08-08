@@ -371,11 +371,14 @@ fun CameraScreen(db: Database,
 
                             val topCrop = (topPointNorm * newH + padTop).roundToInt()
                             val bottomCrop =  (bottomPointNorm * newH + padTop + padBottom).roundToInt() - 1
-                            val leftCrop = ((newW - (bottomCrop - topCrop) * 1080.0 / 1920.0) / 2).roundToInt()
+                            val noseX = noseRot[0] * newW
+                            val cropH = ((bottomCrop - topCrop) * 1080.0 / 1920.0) / 2
 
-                            val rightCrop = (newW - leftCrop).roundToInt()
+                            val leftCrop = (noseX - cropH).roundToInt()
+                            val rightCrop = (noseX + cropH).roundToInt()
 
                             Log.d("TESTDEBUG", "CROP $topCrop->$bottomCrop;$leftCrop->$rightCrop")
+                            Log.d("TESTDEBUG", "CROPX $noseX $cropH")
 
                             transformList.add(CropTransformation(
                                 topCrop,
