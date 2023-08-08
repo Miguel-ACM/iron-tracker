@@ -33,6 +33,7 @@ class ProgressPicViewModel (
         when (event) {
             is ProgressPicEvent.AddProgressPic -> {
                 viewModelScope.launch {
+                    //progressPicDao.deleteAll()
                     progressPicDao.insertProgressPic(event.progressPic)
                 }
             }

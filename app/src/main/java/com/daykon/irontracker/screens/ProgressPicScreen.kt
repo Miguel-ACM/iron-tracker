@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
@@ -57,12 +58,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.daykon.irontracker.R
 import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.ProgressPic
+import com.daykon.irontracker.utils.CropTransformation
+import com.daykon.irontracker.utils.DrawPointTransformation
+import com.daykon.irontracker.utils.PadTransformation
+import com.daykon.irontracker.utils.PoseLandmarkerHelper
+import com.daykon.irontracker.utils.RotateTransformation
 import com.daykon.irontracker.viewModels.ProgressPicViewModel
 import com.daykon.irontracker.viewModels.events.ProgressPicEvent
+import com.google.mediapipe.tasks.vision.core.RunningMode
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -72,7 +83,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @Composable
 fun CameraView(
@@ -185,6 +201,11 @@ fun CameraScreen(db: Database,
     val progressPicViewModel = ProgressPicViewModel(db.progressPicDao)
     val onEvent = progressPicViewModel::onEvent
     val state = progressPicViewModel.state.collectAsState()
+    val context = LocalContext.current
+    val poseLandmarkerHelper = PoseLandmarkerHelper(
+        context = context,
+        runningMode = RunningMode.IMAGE
+    )
 
     var isShowingCamera by remember { mutableStateOf(false) }
 
@@ -197,15 +218,12 @@ fun CameraScreen(db: Database,
         } else {
         }
     }
-    val context = LocalContext.current
 
     when (PackageManager.PERMISSION_GRANTED) {
         ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.CAMERA
         ) -> {
-            Log.d("TESTDEBUG", context.filesDir.toString())
-
             // Override the default behaviour of back press: we wan't to go
             // to the progress pic screen if we try to go back when the
             // camera is open
@@ -235,7 +253,163 @@ fun CameraScreen(db: Database,
                     outputDirectory = context.filesDir,
                     executor = cameraExecutor,
                     onImageCaptured = { uri ->
-                        onEvent(
+                        if (poseLandmarkerHelper.isClose())
+                        {
+                            poseLandmarkerHelper.setupPoseLandmarker()
+                        }
+                        val detectionRes = poseLandmarkerHelper.detectImage(Glide.with(context).asBitmap().load(uri).submit().get())
+                        if (detectionRes != null &&
+                            detectionRes.results.isNotEmpty() &&
+                            detectionRes.results[0].landmarks().isNotEmpty())
+                        {
+                            val landmarks = detectionRes.results[0].landmarks()[0]
+                            val nose = mutableListOf(landmarks[0].x(),
+                                landmarks[0].y(),
+                                landmarks[0].z())
+                            val hip = mutableListOf((landmarks[23].x() + landmarks[24].x()) / 2,
+                                (landmarks[23].y() + landmarks[24].y()) / 2,
+                                (landmarks[23].z() + landmarks[24].z()) / 2)
+
+                            val angle = -(atan2(hip[1]-nose[1], hip[0]-nose[0]) * 180 / PI - 90f)
+                            val angleRad = angle * PI / 180
+
+                            var image = Glide.with(context).asBitmap().load(uri)
+
+                            val newW = detectionRes.inputImageWidth * abs(cos(angleRad)) +
+                                    detectionRes.inputImageHeight * abs(sin(angleRad))
+                            val newH = detectionRes.inputImageWidth * abs(sin(angleRad)) +
+                                    detectionRes.inputImageHeight * abs(cos(angleRad))
+
+                            Log.d("TESTDEBUG", "oldsize ${detectionRes.inputImageWidth},${detectionRes.inputImageHeight}")
+                            Log.d("TESTDEBUG", "newsize $newW,$newH")
+
+                            val transformList = mutableListOf<BitmapTransformation>()
+
+                            landmarks.forEach() {landmark ->
+                                transformList.add(DrawPointTransformation(
+                                    listOf((landmark.x() * detectionRes.inputImageWidth),
+                                        (landmark.y() * detectionRes.inputImageHeight)),
+                                    _size=5f, _color =0xffffff))
+                            }
+
+                            transformList.add(RotateTransformation(
+                                angle.toFloat()
+                            ))
+
+
+
+                            //image = image.rotate(angle.toFloat(), 0f,0f)
+
+                            // Nuevo tamaño despues de rotar
+                            Log.d("TESTDEBUG", "NOSE1${nose[0]},${nose[1]}")
+
+                            //nose[0] = (nose[0] * detectionRes.inputImageWidth / newW / 2).toFloat()
+                            //nose[1] = (nose[1] * detectionRes.inputImageHeight / newH / 2).toFloat()
+
+                            Log.d("TESTDEBUG", "NOSE2${nose[0]},${nose[1]}")
+
+
+                            val noseRot = listOf((nose[0] - 0.5) * cos(angleRad) -
+                                    (nose[1] - 0.5) * sin(angleRad) + 0.5,// + ((newW - detectionRes.inputImageWidth) ) / newW / 2,//
+                                (nose[0] - 0.5) * sin(angleRad) +
+                                        (nose[1] - 0.5) * cos(angleRad) + 0.5 //+ ((newH - detectionRes.inputImageHeight)) / newH / 2
+                            )
+                            /**
+                            val noseRot = listOf(0.0.toDouble(),//
+                                (newH - detectionRes.inputImageHeight) / newH
+                            )
+
+                            val noseRot = listOf((newW - detectionRes.inputImageWidth) / newW,//
+                                0.0
+                            )*/
+
+                            Log.d("TESTDEBUG", "NOSEROT ${noseRot[0]},${noseRot[1]}")
+
+                            val hipRot = listOf((hip[0] - 0.5) * cos(angleRad) -
+                                    (hip[1] - 0.5) * sin(angleRad) + 0.5,
+                                (hip[0] - 0.5) * sin(angleRad) +
+                                        (hip[1] - 0.5) * cos(angleRad) + 0.5
+                            )
+
+                            val distanceNoseHip = hipRot[1] - noseRot[1]
+                            var topPointNorm = noseRot[1] - distanceNoseHip / 3
+                            var bottomPointNorm = hipRot[1] + 2 * distanceNoseHip / 3
+                            var padTop = 0
+                            var padBottom = 0
+
+
+                            if (topPointNorm < 0 ||bottomPointNorm > 1){
+                                if (topPointNorm < 0) {
+                                    padTop = (abs(topPointNorm) * detectionRes.inputImageHeight)
+                                        .roundToInt()
+                                }
+                                if (bottomPointNorm > 1) {
+                                    padBottom = ((topPointNorm - 1) * detectionRes.inputImageHeight)
+                                        .roundToInt()
+                                }
+
+                                transformList.add(PadTransformation(padTop,0,padBottom,0))
+                                if (padTop > 0){
+                                    topPointNorm = 0.0
+                                }
+                                if (padBottom > 0){
+                                    topPointNorm = 1.0
+                                }
+
+                            }
+                            Log.d("TESTDEBUG", "PADTOP $padTop")
+
+                            /*Log.d("TESTDEBUG", "${(topPointNorm * detectionRes.inputImageHeight + padTop).roundToInt()},"+
+                            "${detectionRes.inputImageWidth - 1},"+
+                            "${(bottomPointNorm * detectionRes.inputImageHeight + padTop + padBottom).roundToInt() - 1},"+
+                            "0,${detectionRes.inputImageHeight},${detectionRes.inputImageWidth}")*/
+
+                            transformList.add(DrawPointTransformation(
+                                listOf((noseRot[0] * newW).toFloat(),
+                                    (noseRot[1] * newH + padTop).toFloat()),
+                            _size =15f, _color =0xff0000))
+
+                            val topCrop = (topPointNorm * newH + padTop).roundToInt()
+                            val bottomCrop =  (bottomPointNorm * newH + padTop + padBottom).roundToInt() - 1
+                            val leftCrop = ((newW - (bottomCrop - topCrop) * 1080.0 / 1920.0) / 2).roundToInt()
+
+                            val rightCrop = (newW - leftCrop).roundToInt()
+
+                            Log.d("TESTDEBUG", "CROP $topCrop->$bottomCrop;$leftCrop->$rightCrop")
+
+                            transformList.add(CropTransformation(
+                                topCrop,
+                                rightCrop - 1,
+                                bottomCrop,
+                                leftCrop
+                                )
+                            )
+
+                            image = image.transform(MultiTransformation(transformList))
+
+                            //image.transform(MultiTransformation(*(transformList)))
+                            //image.apply(RequestOptions().transforms(*(transformList)))
+
+                            val fileName = uri.toString().split("/")
+                            val photoFile = File(
+                                context.filesDir,
+                                fileName[fileName.size - 1]
+                            )
+                            val imageBitmap = image.submit().get()
+                            Log.d("TESTDEBUG", "get")
+                            val stream = FileOutputStream(photoFile)
+                            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 25, stream)
+                            stream.flush()
+                            stream.close()
+                            Log.d("TESTDEBUG", "closed")
+
+
+
+                        }
+                        Log.d("Detection results", detectionRes.toString())
+                            onEvent(
+
+
                             ProgressPicEvent.AddProgressPic(
                                 ProgressPic(
                                     date = LocalDateTime.now(),
@@ -244,8 +418,6 @@ fun CameraScreen(db: Database,
                             )
                         )
                         isShowingCamera=false
-
-
                     },
                     onError = {})
             } else {
@@ -282,17 +454,17 @@ fun CameraScreen(db: Database,
                                     .date.format(dateTimeFormatterYear)
                                 )
                             }
-
-                            Log.d("TESTDEBUG", "size${state.value.progressPics.size}")
-                            Row(modifier = Modifier.padding(15.dp, 5.dp)) {
-                                Slider(
-                                    value = state.value.progressPics.size - currImgIndex - 1,
-                                    onValueChange = {
-                                        currImgIndex = state.value.progressPics.size - it - 1
-                                    },
-                                    valueRange = 0f..state.value.progressPics.size.toFloat() - 1,
-                                    steps = state.value.progressPics.size - 2
-                                )
+                            if (state.value.progressPics.size > 1) {
+                                Row(modifier = Modifier.padding(15.dp, 5.dp)) {
+                                    Slider(
+                                        value = state.value.progressPics.size - currImgIndex - 1,
+                                        onValueChange = {
+                                            currImgIndex = state.value.progressPics.size - it - 1
+                                        },
+                                        valueRange = 0f..state.value.progressPics.size.toFloat() - 1,
+                                        steps = state.value.progressPics.size - 2
+                                    )
+                                }
                             }
                         }
                     }

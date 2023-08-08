@@ -12,4 +12,7 @@ interface ProgressPicDao {
 
     @Query("SELECT * FROM ProgressPic ORDER BY date DESC")
     fun getProgressPics(): Flow<List<ProgressPic>>
+
+    @Query("DELETE FROM ProgressPic")
+    suspend fun deleteAll()
 }

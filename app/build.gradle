@@ -7,6 +7,7 @@ plugins {
 android {
     namespace 'com.daykon.irontracker'
     compileSdk 33
+    ndkVersion "25.2.9519653"
 
     defaultConfig {
         applicationId "com.daykon.irontracker"
@@ -89,4 +90,10 @@ dependencies {
 
     implementation "io.coil-kt:coil:2.4.0"
     implementation "io.coil-kt:coil-compose:2.4.0"
+
+    // Mediapipe, para las poses
+    implementation 'com.google.mediapipe:tasks-vision:0.10.2'
+
+    // Picasso, para transformar imagenes
+    implementation 'com.github.bumptech.glide:glide:4.15.1'
 }
