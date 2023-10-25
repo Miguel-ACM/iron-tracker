@@ -120,9 +120,10 @@ class ExerciseViewModel (
             }
 
             is ExerciseRecordEvent.SetMaxWeight -> {
+                val weight: String = event.maxWeight.replace(Regex("[^0-9.,]"), "")
                 _state.update {
                     it.copy(
-                        maxWeight = event.maxWeight
+                        maxWeight = weight
                     )
                 }
 
