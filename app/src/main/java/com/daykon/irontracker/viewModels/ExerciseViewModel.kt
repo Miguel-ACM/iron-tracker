@@ -137,9 +137,10 @@ class ExerciseViewModel (
             }
 
             is ExerciseRecordEvent.UpdateSearch -> {
+                val term: String = event.term.replace("\n","")
                 _state.update {
                     it.copy(
-                        searchTerm = event.term
+                        searchTerm = term
                     )
                 }
             }
