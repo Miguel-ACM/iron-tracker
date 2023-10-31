@@ -25,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import com.daykon.irontracker.viewModels.state.ExerciseState
@@ -131,13 +133,20 @@ fun ExpandedSearchView(
         }
 
         BasicTextField(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .focusRequester(textFieldFocusRequester)
-                .background(color = MaterialTheme.colorScheme.onPrimaryContainer, shape = RoundedCornerShape(size = 16.dp))
-                .padding(PaddingValues(15.dp,5.dp)),
-            value = state.searchTerm,
+                .background(
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = RoundedCornerShape(size = 16.dp)
+                )
+                .padding(PaddingValues(15.dp, 5.dp)),
+            value = TextFieldValue(
+                text = state.searchTerm,
+                selection = TextRange(state.searchTerm.length)
+            ),
             onValueChange = {
-                onEvent(ExerciseRecordEvent.UpdateSearch(it))
+                onEvent(ExerciseRecordEvent.UpdateSearch(it.text))
             },
             textStyle = TextStyle(
                 color = MaterialTheme.colorScheme.onPrimary
