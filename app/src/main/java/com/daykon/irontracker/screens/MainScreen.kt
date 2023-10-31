@@ -67,6 +67,7 @@ import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import com.daykon.irontracker.viewModels.state.ExerciseState
 import com.daykon.irontracker.db.MuscleGroup
 import kotlinx.coroutines.launch
+import java.text.Normalizer
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
@@ -165,10 +166,17 @@ fun MainScreen (
                             }
                             i += 1
                         }
+                        val regexUnaccent = "\\p{InCombiningDiacriticalMarks}+".toRegex()
+
+                        fun CharSequence.unaccent(): String {
+                            val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
+                            return regexUnaccent.replace(temp, "")
+                        }
+
                         state.searchTerm == "" ||
-                                muscleGroup.name.contains(state.searchTerm, ignoreCase = true)  ||
-                                muscleGroup.extraSearch.contains(state.searchTerm, ignoreCase = true)  ||
-                                it.name.contains(state.searchTerm, ignoreCase = true)
+                                muscleGroup.name.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)  ||
+                                muscleGroup.extraSearch.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)  ||
+                                it.name.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)
                     }) { exercise ->
 
                         val currentExercise = rememberUpdatedState(exercise)

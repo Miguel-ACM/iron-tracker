@@ -116,6 +116,11 @@ fun ExpandedSearchView(
         textFieldFocusRequester.requestFocus()
     }
 
+
+    val searchTerm = remember { mutableStateOf(TextFieldValue(text = state.searchTerm,
+        selection = TextRange(state.searchTerm.length))) }
+
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -141,11 +146,9 @@ fun ExpandedSearchView(
                     shape = RoundedCornerShape(size = 16.dp)
                 )
                 .padding(PaddingValues(15.dp, 5.dp)),
-            value = TextFieldValue(
-                text = state.searchTerm,
-                selection = TextRange(state.searchTerm.length)
-            ),
+            value = searchTerm.value,
             onValueChange = {
+                searchTerm.value = it
                 onEvent(ExerciseRecordEvent.UpdateSearch(it.text))
             },
             textStyle = TextStyle(
