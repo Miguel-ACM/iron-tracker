@@ -1,7 +1,10 @@
 package com.daykon.irontracker.composable
 
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -16,9 +19,12 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.daykon.irontracker.R
 import kotlinx.coroutines.launch
@@ -30,16 +36,32 @@ fun DrawerItem(text: String,
                onClick: () -> Unit,
                drawerState: DrawerState,
                isSelected: Boolean = false,
+               isBeta: Boolean = false
                ) {
     val scope = rememberCoroutineScope()
 
     NavigationDrawerItem(
         icon = icon,
-        label = { Text(text) },
+        label = { if (isBeta) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text)
+                Text(
+                    "BETA",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp, // You can adjust the font size
+                )
+            }
+        } else {
+            Text(text)
+        } },
         selected = isSelected,
         onClick = {
             scope.launch { drawerState.close()
-            onClick()
+                onClick()
             }
         },
         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -68,14 +90,17 @@ fun Drawer (isSelected: Int, drawerState: DrawerState,
                     onClick = { Log.d("TESTDEBUG", "progress")
                         navController.navigate("progress") },
                     drawerState = drawerState,
-                    isSelected = isSelected == 0)
+                    isSelected = isSelected == 0,
+                    isBeta = true)
                 Spacer(Modifier.height(12.dp))
-                DrawerItem(text = "Weight",
+                /*DrawerItem(text = "Weight",
                     icon = { Icon(painterResource(id = R.drawable.monitor_weight_black_24dp),
                         contentDescription = null) },
                     onClick = {  },
                     drawerState = drawerState,
                     isSelected = isSelected == 0)
+
+                 */
 
             }
         },
