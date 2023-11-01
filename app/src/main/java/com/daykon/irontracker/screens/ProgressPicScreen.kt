@@ -65,7 +65,6 @@ import com.daykon.irontracker.R
 import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.ProgressPic
 import com.daykon.irontracker.utils.CropTransformation
-import com.daykon.irontracker.utils.DrawPointTransformation
 import com.daykon.irontracker.utils.PadTransformation
 import com.daykon.irontracker.utils.PoseLandmarkerHelper
 import com.daykon.irontracker.utils.RotateTransformation
@@ -285,12 +284,12 @@ fun CameraScreen(db: Database,
 
                             val transformList = mutableListOf<BitmapTransformation>()
 
-                            landmarks.forEach() {landmark ->
-                                transformList.add(DrawPointTransformation(
-                                    listOf((landmark.x() * detectionRes.inputImageWidth),
-                                        (landmark.y() * detectionRes.inputImageHeight)),
-                                    _size=5f, _color =0xffffff))
-                            }
+                            //landmarks.forEach() {landmark ->
+                            //    transformList.add(DrawPointTransformation(
+                            //        listOf((landmark.x() * detectionRes.inputImageWidth),
+                            //            (landmark.y() * detectionRes.inputImageHeight)),
+                            //        _size=5f, _color =0xffffff))
+                            //}
 
                             transformList.add(RotateTransformation(
                                 angle.toFloat()
@@ -298,32 +297,11 @@ fun CameraScreen(db: Database,
 
 
 
-                            //image = image.rotate(angle.toFloat(), 0f,0f)
-
-                            // Nuevo tamaño despues de rotar
-                            Log.d("TESTDEBUG", "NOSE1${nose[0]},${nose[1]}")
-
-                            //nose[0] = (nose[0] * detectionRes.inputImageWidth / newW / 2).toFloat()
-                            //nose[1] = (nose[1] * detectionRes.inputImageHeight / newH / 2).toFloat()
-
-                            Log.d("TESTDEBUG", "NOSE2${nose[0]},${nose[1]}")
-
-
                             val noseRot = listOf((nose[0] - 0.5) * cos(angleRad) -
                                     (nose[1] - 0.5) * sin(angleRad) + 0.5,// + ((newW - detectionRes.inputImageWidth) ) / newW / 2,//
                                 (nose[0] - 0.5) * sin(angleRad) +
                                         (nose[1] - 0.5) * cos(angleRad) + 0.5 //+ ((newH - detectionRes.inputImageHeight)) / newH / 2
                             )
-                            /**
-                            val noseRot = listOf(0.0.toDouble(),//
-                                (newH - detectionRes.inputImageHeight) / newH
-                            )
-
-                            val noseRot = listOf((newW - detectionRes.inputImageWidth) / newW,//
-                                0.0
-                            )*/
-
-                            Log.d("TESTDEBUG", "NOSEROT ${noseRot[0]},${noseRot[1]}")
 
                             val hipRot = listOf((hip[0] - 0.5) * cos(angleRad) -
                                     (hip[1] - 0.5) * sin(angleRad) + 0.5,
@@ -357,17 +335,11 @@ fun CameraScreen(db: Database,
                                 }
 
                             }
-                            Log.d("TESTDEBUG", "PADTOP $padTop")
 
-                            /*Log.d("TESTDEBUG", "${(topPointNorm * detectionRes.inputImageHeight + padTop).roundToInt()},"+
-                            "${detectionRes.inputImageWidth - 1},"+
-                            "${(bottomPointNorm * detectionRes.inputImageHeight + padTop + padBottom).roundToInt() - 1},"+
-                            "0,${detectionRes.inputImageHeight},${detectionRes.inputImageWidth}")*/
-
-                            transformList.add(DrawPointTransformation(
-                                listOf((noseRot[0] * newW).toFloat(),
-                                    (noseRot[1] * newH + padTop).toFloat()),
-                            _size =15f, _color =0xff0000))
+                            //transformList.add(DrawPointTransformation(
+                            //    listOf((noseRot[0] * newW).toFloat(),
+                            //        (noseRot[1] * newH + padTop).toFloat()),
+                            //_size =15f, _color =0xff0000))
 
                             val topCrop = (topPointNorm * newH + padTop).roundToInt()
                             val bottomCrop =  (bottomPointNorm * newH + padTop + padBottom).roundToInt() - 1
@@ -376,9 +348,6 @@ fun CameraScreen(db: Database,
 
                             val leftCrop = (noseX - cropH).roundToInt()
                             val rightCrop = (noseX + cropH).roundToInt()
-
-                            Log.d("TESTDEBUG", "CROP $topCrop->$bottomCrop;$leftCrop->$rightCrop")
-                            Log.d("TESTDEBUG", "CROPX $noseX $cropH")
 
                             transformList.add(CropTransformation(
                                 topCrop,
@@ -399,20 +368,12 @@ fun CameraScreen(db: Database,
                                 fileName[fileName.size - 1]
                             )
                             val imageBitmap = image.submit().get()
-                            Log.d("TESTDEBUG", "get")
                             val stream = FileOutputStream(photoFile)
                             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 25, stream)
                             stream.flush()
                             stream.close()
-                            Log.d("TESTDEBUG", "closed")
-
-
-
                         }
-                        Log.d("Detection results", detectionRes.toString())
                             onEvent(
-
-
                             ProgressPicEvent.AddProgressPic(
                                 ProgressPic(
                                     date = LocalDateTime.now(),
