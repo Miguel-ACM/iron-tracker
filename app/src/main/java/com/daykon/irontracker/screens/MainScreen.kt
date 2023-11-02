@@ -144,10 +144,11 @@ fun MainScreen (
 
 
                 LazyColumn(
+
                     modifier = Modifier
                         .fillMaxSize(),
-                        //.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
+                    contentPadding = PaddingValues(0.dp,0.dp,0.dp,64.dp)
 
                 ) {
 
