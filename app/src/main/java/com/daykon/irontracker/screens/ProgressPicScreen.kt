@@ -28,13 +28,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -51,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -311,7 +316,7 @@ fun CameraScreen(db: Database,
 
                             val distanceNoseHip = hipRot[1] - noseRot[1]
                             var topPointNorm = noseRot[1] - distanceNoseHip / 3
-                            var bottomPointNorm = hipRot[1] + 2 * distanceNoseHip / 3
+                            val bottomPointNorm = hipRot[1] + 2 * distanceNoseHip / 3
                             var padTop = 0
                             var padBottom = 0
 
@@ -385,16 +390,7 @@ fun CameraScreen(db: Database,
                     },
                     onError = {})
             } else {
-                Scaffold(
-                    floatingActionButton = {
-                        FloatingActionButton(onClick = {
-                            isShowingCamera = true
-                        }) {
-                            Icon(imageVector = Icons.Default.Add,
-                                contentDescription = "Add Exercise")
-                        }
-                    }
-                    ) { padding ->
+                Scaffold() { padding ->
                     var currImgIndex by remember {
                         mutableFloatStateOf(0f)
                     }
@@ -405,10 +401,34 @@ fun CameraScreen(db: Database,
 
                                 val cacheFile = File(state.value.progressPics[currImgIndexInt].path)
                                 val splitCacheFile = cacheFile.toString().split(":")
-                                Image(
-                                    rememberAsyncImagePainter(splitCacheFile[splitCacheFile.size - 1]),
-                                    "test"
-                                )
+                                Box() {
+                                    Image(
+                                        rememberAsyncImagePainter(splitCacheFile[splitCacheFile.size - 1]),
+                                        "test",
+                                        modifier = Modifier
+                                            .padding(8.dp, 8.dp)
+                                            .clip(RoundedCornerShape(20.dp))
+                                    )
+                                    Button(onClick = {
+                                           isShowingCamera = true},
+                                           modifier = Modifier.align(Alignment.TopEnd)
+                                               .padding(16.dp, 16.dp)
+                                               .height(48.dp)
+                                               .width(48.dp),
+                                            shape = RoundedCornerShape(20.dp),
+                                        contentPadding = PaddingValues(
+                                            start = 4.dp,
+                                            top = 4.dp,
+                                            end = 4.dp,
+                                            bottom = 4.dp,
+                                        )
+                                    ) {
+
+                                        Icon(imageVector = Icons.Default.Add,
+                                            contentDescription = "Add Exercise")
+                                    }
+                                }
+
 
                             }
                             Row(modifier = Modifier.align(Alignment.CenterHorizontally)){
