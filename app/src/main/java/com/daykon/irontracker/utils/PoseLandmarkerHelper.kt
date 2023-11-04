@@ -2,10 +2,8 @@ package com.daykon.irontracker.utils
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.os.SystemClock
 import android.util.Log
-import androidx.camera.core.ImageProxy
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.framework.image.MPImage
 import com.google.mediapipe.tasks.core.BaseOptions
@@ -18,7 +16,7 @@ class PoseLandmarkerHelper(
     private var minPoseDetectionConfidence: Float = DEFAULT_POSE_DETECTION_CONFIDENCE,
     private var minPoseTrackingConfidence: Float = DEFAULT_POSE_TRACKING_CONFIDENCE,
     private var minPosePresenceConfidence: Float = DEFAULT_POSE_PRESENCE_CONFIDENCE,
-    private var currentModel: Int = MODEL_POSE_LANDMARKER_HEAVY,
+    private var currentModel: Int = MODEL_POSE_LANDMARKER_FULL,
     private var currentDelegate: Int = DELEGATE_CPU,
     var runningMode: RunningMode = RunningMode.IMAGE,
     val context: Context,
@@ -103,13 +101,6 @@ class PoseLandmarkerHelper(
                 "Image classifier failed to load model with error: " + e.message
             )
         }
-    }
-
-    // Run pose landmark using MediaPipe Pose Landmarker API
-    fun detectAsync(mpImage: MPImage, frameTime: Long) {
-        poseLandmarker?.detectAsync(mpImage, frameTime)
-        // As we're using running mode LIVE_STREAM, the landmark result will
-        // be returned in returnLivestreamResult function
     }
 
     // Accepts the URI for a video file loaded from the user's gallery and attempts to run

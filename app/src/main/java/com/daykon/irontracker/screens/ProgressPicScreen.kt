@@ -217,10 +217,10 @@ fun CameraScreen(db: Database,
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
+        /*if (isGranted) {
 
         } else {
-        }
+        }*/
     }
 
     when (PackageManager.PERMISSION_GRANTED) {
@@ -228,7 +228,7 @@ fun CameraScreen(db: Database,
             context,
             Manifest.permission.CAMERA
         ) -> {
-            // Override the default behaviour of back press: we wan't to go
+            // Override the default behaviour of back press: we want to go
             // to the progress pic screen if we try to go back when the
             // camera is open
             val backPressedDispatcher: OnBackPressedDispatcher? = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -284,8 +284,6 @@ fun CameraScreen(db: Database,
                             val newH = detectionRes.inputImageWidth * abs(sin(angleRad)) +
                                     detectionRes.inputImageHeight * abs(cos(angleRad))
 
-                            Log.d("TESTDEBUG", "oldsize ${detectionRes.inputImageWidth},${detectionRes.inputImageHeight}")
-                            Log.d("TESTDEBUG", "newsize $newW,$newH")
 
                             val transformList = mutableListOf<BitmapTransformation>()
 
@@ -390,7 +388,7 @@ fun CameraScreen(db: Database,
                     },
                     onError = {})
             } else {
-                Scaffold() { padding ->
+                Scaffold { padding ->
                     var currImgIndex by remember {
                         mutableFloatStateOf(0f)
                     }
