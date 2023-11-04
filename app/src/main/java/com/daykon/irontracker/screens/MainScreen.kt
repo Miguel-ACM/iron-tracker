@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -281,7 +282,9 @@ fun MainScreen (
                                 },
                                     shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
                                     contentPadding = PaddingValues(0.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(muscleGroup.color))) {
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(muscleGroup.color),
+                                        contentColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
+                                    else MaterialTheme.colorScheme.onBackground)) {
                                     Icon(imageVector = Icons.Default.Add, contentDescription = "")
                                 }
                             }
