@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.graphics.PointF
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -290,7 +291,6 @@ fun GraphScreen (
     exerciseId: String = "0"
     ) {
     val graphViewModel = GraphViewModel(db.exerciseDao,db.exerciseRecordDao, exerciseId.toInt())
-    val onEvent = graphViewModel::onEvent
     val state = graphViewModel.state.collectAsState()
 
     Scaffold { padding ->
@@ -308,7 +308,8 @@ fun GraphScreen (
                         Text(state.value.exercise.exercise.name,
                              style = MaterialTheme.typography.headlineSmall,
                              modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
-                             color = MaterialTheme.colorScheme.background,
+                             color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
+                                else MaterialTheme.colorScheme.onBackground,
                              textAlign = TextAlign.Center)
                     }
                 }
