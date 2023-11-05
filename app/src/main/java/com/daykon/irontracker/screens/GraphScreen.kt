@@ -208,7 +208,11 @@ fun Graph(
                                 }
                             }
                             Log.d("Closest", closest.toString())
-                            onEvent(GraphEvent.SetSelectedPoint(closest))
+                            if (distance < 150) {
+                                onEvent(GraphEvent.SetSelectedPoint(closest))
+                            } else {
+                                onEvent(GraphEvent.SetSelectedPoint(-1))
+                            }
                         }
                     )
                 })
