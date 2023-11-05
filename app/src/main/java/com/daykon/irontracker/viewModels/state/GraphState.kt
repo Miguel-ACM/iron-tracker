@@ -13,6 +13,7 @@ data class GraphState(
         Exercise(1,"", 0),
         MuscleGroup(0, "", 0, extraSearch = "", orderIndex = 0f)
     ),
+    val selectedPoint: Int = -1,
             //ExerciseWithMuscleGroup = ,
     val startDateTime: LocalDateTime = LocalDateTime.now().minusYears(10),
     val endDateTime: LocalDateTime = LocalDateTime.now().plusYears(1),

@@ -61,8 +61,8 @@ class GraphViewModel (
                         endDate = endDateTime
                     )
                 }
-
             }
+
             is GraphEvent.SetStartDate -> {
                 _state.update {
                     it.copy(
@@ -80,9 +80,6 @@ class GraphViewModel (
             }
 
             is GraphEvent.SetExerciseId -> {
-                Log.d("TESTDEBUG" , "IN SET EXERCISE ID")
-
-
                 viewModelScope.launch (Dispatchers.IO){
                     val e = exerciseDao.getExerciseWithMuscleGroupNoFlow(event.exerciseId)
                     val er = exerciseRecordDao.getExerciseRecordsBetweenDatesNoFlow(
@@ -101,10 +98,14 @@ class GraphViewModel (
                             )
                     }
                 }
+            }
 
-
-
-
+            is GraphEvent.SetSelectedPoint -> {
+                _state.update {
+                    it.copy(
+                        selectedPoint = event.point
+                    )
+                }
             }
         }
     }

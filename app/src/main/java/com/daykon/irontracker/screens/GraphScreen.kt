@@ -61,6 +61,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.daykon.irontracker.viewModels.events.GraphEvent
 import kotlin.math.sqrt
 
 @OptIn(ExperimentalTextApi::class)
@@ -69,7 +70,8 @@ fun Graph(
     records: List<ExerciseRecord>,
     mode: String = "reps", // Possible values ["reps", "weights"],
     color: Color = Color(0x00000000),
-    state: GraphState
+    state: GraphState,
+    onEvent: (GraphEvent) -> Unit
 ) {
     var minValue = 9999999f
     var maxValue = 0f
@@ -206,7 +208,7 @@ fun Graph(
                                 }
                             }
                             Log.d("Closest", closest.toString())
-
+                            onEvent(GraphEvent.SetSelectedPoint(closest))
                         }
                     )
                 })
@@ -281,8 +283,8 @@ fun Graph(
                 Log.d("ClosestIn", "${coordinates[i].x} ${coordinates[i].y}")
                 /** drawing circles to indicate all the points */
                 drawCircle(
-                    color = color,
-                    radius = 5f,
+                    color = if (state.selectedPoint == i) Color.Red else color,
+                    radius = if (state.selectedPoint == i) 15f else 5f,
                     center = Offset(x1,y1)
                 )
                 if (mode != "reps") {
@@ -359,6 +361,7 @@ fun GraphScreen (
     ) {
     val graphViewModel = GraphViewModel(db.exerciseDao,db.exerciseRecordDao, exerciseId.toInt())
     val state = graphViewModel.state.collectAsState()
+    val onEvent: (GraphEvent) -> Unit = graphViewModel::onEvent
 
     Scaffold { padding ->
         Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))){
@@ -403,7 +406,7 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color), state.value)
+                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color), state.value, onEvent)
                 }
             }
             Row(modifier = Modifier
@@ -419,7 +422,7 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color), state.value)
+                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color), state.value, onEvent)
                 }
             }
         }
