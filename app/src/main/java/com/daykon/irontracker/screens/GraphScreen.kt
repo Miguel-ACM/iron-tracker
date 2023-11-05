@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.graphics.PointF
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,7 +36,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextLayoutResult
@@ -42,21 +48,28 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.ExerciseRecord
 import com.daykon.irontracker.viewModels.GraphViewModel
+import com.daykon.irontracker.viewModels.state.GraphState
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlin.math.sqrt
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Graph(
     records: List<ExerciseRecord>,
     mode: String = "reps", // Possible values ["reps", "weights"],
-    color: Color = Color(0x00000000)
+    color: Color = Color(0x00000000),
+    state: GraphState
 ) {
     var minValue = 9999999f
     var maxValue = 0f
@@ -85,60 +98,119 @@ fun Graph(
     val dateTimeFormatterMonth: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM")
     val dateTimeFormatterYear: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yy")
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
     Box(
         modifier = Modifier
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 12.dp)
+            .onSizeChanged {
+                boxSize = it
+            },
         contentAlignment = Alignment.Center
     ) {
         val textMeasurer = rememberTextMeasurer()
         val configuration = LocalConfiguration.current
-        Canvas(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            val screenHeight: Float = size.height
-            val screenWidth: Float = size.width
+        var pressOffset by remember {
+            mutableStateOf(DpOffset.Zero)
+        }
 
-            val paddingX0: Dp = 35.dp
-            val paddingX1: Dp = 30.dp
-            val paddingY0: Dp = 50.dp
-            val paddingY1: Dp = 10.dp
-            val xAxisSpace = (screenWidth - paddingX0.toPx() - paddingX1.toPx())
-            val yAxisSpace = (screenHeight - paddingY0.toPx() - paddingY1.toPx())
+        val screenHeight: Float = boxSize.height.toFloat()
+        val screenWidth: Float = boxSize.width.toFloat()
 
-            var minValueInt: Int = minValue.roundToInt()
-            var maxValueInt: Int = maxValue.roundToInt()
-            if (minValueInt == maxValueInt) {
-                minValueInt -= 1
-                maxValueInt += 1
-            }
-            var reduceMin = true
-            val divisionValue = if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
-                200
+        val paddingX0: Dp = 35.dp
+        val paddingX1: Dp = 30.dp
+        val paddingY0: Dp = 50.dp
+        val paddingY1: Dp = 10.dp
+        val paddingX0Px = with(LocalDensity.current) {paddingX0.toPx()}
+        val paddingX1Px = with(LocalDensity.current) {paddingX1.toPx()}
+        val paddingY0Px = with(LocalDensity.current) {paddingY0.toPx()}
+        val paddingY1Px = with(LocalDensity.current) {paddingY1.toPx()}
+
+        val xAxisSpace = (screenWidth - paddingX0Px - paddingX1Px)
+        val yAxisSpace = (screenHeight - paddingY0Px - paddingY1Px)
+
+        var minValueInt: Int = minValue.roundToInt()
+        var maxValueInt: Int = maxValue.roundToInt()
+        if (minValueInt == maxValueInt) {
+            minValueInt -= 1
+            maxValueInt += 1
+        }
+        var reduceMin = true
+        val divisionValue = if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
+            200
+        } else {
+            100
+        }
+        val numMarksY: Int = (yAxisSpace / divisionValue).roundToInt()
+        val numMarksX: Int = (xAxisSpace / 300).roundToInt()
+        while((maxValueInt - minValueInt) % numMarksY != 0) {
+            if (reduceMin && minValueInt > 0) {minValueInt -= 1}
+            else if (!reduceMin) {maxValueInt += 1}
+            reduceMin = !reduceMin
+        }
+        val intervalY: Int = (maxValueInt - minValueInt) / numMarksY
+        val intervalX: Long = minutesBetween / numMarksX + 1
+
+        val coordinates: ArrayList<PointF> = ArrayList()
+
+        fun formatTime(i: Int): String {
+            val time: LocalDateTime = maxDate.minusMinutes((numMarksX - i) * intervalX)
+            if (minutesBetween > 365 * 24 * 60)
+                return time.format(dateTimeFormatterYear)
+            return time.format(dateTimeFormatterMonth)
+        }
+
+        fun getXYValuesRecord(record: ExerciseRecord): Array<Float>{
+            val date: Long = ChronoUnit.MINUTES.between(minDate, record.date)
+            val value = if (mode == "reps"){
+                record.reps.toFloat()
             } else {
-                100
+                record.weight
             }
-            val numMarksY: Int = (yAxisSpace / divisionValue).roundToInt()
-            val numMarksX: Int = (xAxisSpace / 300).roundToInt()
-            while((maxValueInt - minValueInt) % numMarksY != 0) {
-                if (reduceMin && minValueInt > 0) {minValueInt -= 1}
-                else if (!reduceMin) {maxValueInt += 1}
-                reduceMin = !reduceMin
-            }
-            val intervalY: Int = (maxValueInt - minValueInt) / numMarksY
-            val intervalX: Long = minutesBetween / numMarksX + 1
-
-            val coordinates: ArrayList<PointF> = ArrayList()
-
-            fun formatTime(i: Int): String {
-                val time: LocalDateTime = maxDate.minusMinutes((numMarksX - i) * intervalX)
-                if (minutesBetween > 365 * 24 * 60)
-                    return time.format(dateTimeFormatterYear)
-                return time.format(dateTimeFormatterMonth)
+            val x1: Float = xAxisSpace * date / minutesBetween + paddingX0Px
+            Log.d("DEBUG", minValueInt.toString() + " " + maxValueInt.toString() + " " + value.toString() + " | " + ((value - minValueInt) / (maxValueInt - minValueInt)).toString())
+            var y1: Float = yAxisSpace * (1 - (value - minValueInt) / (maxValueInt - minValueInt))
+            if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
+                y1 = yAxisSpace - y1
             }
 
+            return arrayOf(x1, y1)
+        }
 
-            /** placing x axis points */
+        fun getInitialPositions(records: List<ExerciseRecord>): ArrayList<Array<Float>>  {
+            val positions = ArrayList<Array<Float>>()
+            for (i in records.indices) {
+                positions.add(getXYValuesRecord(records[i]))
+            }
+            return positions
+        }
 
+        val positions = getInitialPositions(records)
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(screenHeight) {
+                    detectTapGestures(
+                        onTap = {
+                            pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                            var closest: Int = -1
+                            var distance: Float = Float.MAX_VALUE
+                            for (i in coordinates.indices) {
+                                val d: Float = sqrt(
+                                    ((positions[i][0] - pressOffset.x.toPx()) * (positions[i][0] - pressOffset.x.toPx())) +
+                                            ((positions[i][1] - pressOffset.y.toPx()) * (positions[i][1] - pressOffset.y.toPx()))
+                                )
+                                if (d < distance) {
+                                    distance = d
+                                    closest = i
+                                }
+                            }
+                            Log.d("Closest", closest.toString())
+
+                        }
+                    )
+                })
+            {
             var j = 0
             while (j < numMarksX + 1) {
                 val measuredText: TextLayoutResult = textMeasurer.measure(AnnotatedString(formatTime(j)))
@@ -180,22 +252,7 @@ fun Graph(
                 style = TextStyle.Default.copy(color = onBackgroundColor)
             )
 
-            fun getXYValuesRecord(record: ExerciseRecord): Array<Float>{
-                val date: Long = ChronoUnit.MINUTES.between(minDate, record.date)
-                val value = if (mode == "reps"){
-                    record.reps.toFloat()
-                } else {
-                    record.weight
-                }
-                val x1: Float = xAxisSpace * date / minutesBetween + paddingX0.toPx()
-                Log.d("DEBUG", minValueInt.toString() + " " + maxValueInt.toString() + " " + value.toString() + " | " + ((value - minValueInt) / (maxValueInt - minValueInt)).toString())
-                var y1: Float = yAxisSpace * (1 - (value - minValueInt) / (maxValueInt - minValueInt))
-                if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
-                    y1 = yAxisSpace - y1
-                }
 
-                return arrayOf(x1, y1)
-            }
 
             /** Draw coordinate axis */
             val axis = Path().apply {
@@ -212,18 +269,28 @@ fun Graph(
 
             /** placing points */
             for (i in records.indices) {
-                val pos: Array<Float> = getXYValuesRecord(records[i])
+                val pos: Array<Float> = positions[i]
                 val x1: Float = pos[0]
                 val y1: Float = pos[1]
 
+
+
+
                 coordinates.add(PointF(x1,y1))
+
+                Log.d("ClosestIn", "${coordinates[i].x} ${coordinates[i].y}")
                 /** drawing circles to indicate all the points */
                 drawCircle(
                     color = color,
                     radius = 5f,
                     center = Offset(x1,y1)
                 )
+                if (mode != "reps") {
+                    Log.d("coordinates", i.toString() + " " + PointF(x1, y1).toString())
+                }
             }
+
+
 
             val controlPoints1: ArrayList<PointF> = ArrayList()
             val controlPoints2: ArrayList<PointF> = ArrayList()
@@ -336,7 +403,7 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color))
+                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color), state.value)
                 }
             }
             Row(modifier = Modifier
@@ -352,7 +419,7 @@ fun GraphScreen (
                     }
                 } else {
 
-                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color))
+                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color), state.value)
                 }
             }
         }

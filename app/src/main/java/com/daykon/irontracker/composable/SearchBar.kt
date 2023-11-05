@@ -27,10 +27,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import com.daykon.irontracker.viewModels.state.ExerciseState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.res.stringResource
+import com.daykon.irontracker.R
 
 @Composable
 fun ExpandableSearchView(
@@ -88,12 +93,24 @@ fun CollapsedSearchView(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Iron tracker",
-            //style = MaterialTheme.typography.h6,
-            modifier = Modifier
-                .padding(start = 16.dp)
-        )
+        Column() {
+            Row() {
+                Text(
+                    text = "Iron tracker",
+                    //style = MaterialTheme.typography.h6,
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                )
+
+                Text(
+                    stringResource(R.string.version_name),
+                    modifier = Modifier.padding(start = 4.dp),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 8.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f)
+                )
+            }
+        }
         IconButton(onClick = { onExpandedChanged(true) }) {
             SearchIcon()
         }
