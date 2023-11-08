@@ -3,7 +3,10 @@ package com.daykon.irontracker.screens
 import android.content.res.Configuration
 import android.graphics.PointF
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -13,9 +16,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,7 +67,11 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import com.daykon.irontracker.viewModels.events.GraphEvent
 import kotlin.math.sqrt
 
@@ -71,12 +82,16 @@ fun Graph(
     mode: String = "reps", // Possible values ["reps", "weights"],
     color: Color = Color(0x00000000),
     state: GraphState,
-    onEvent: (GraphEvent) -> Unit
+    onEvent: (GraphEvent) -> Unit,
+    onGraphClick: (DpOffset) -> Unit
 ) {
     var minValue = 9999999f
     var maxValue = 0f
     var minDate: LocalDateTime = LocalDateTime.MAX
     var maxDate: LocalDateTime = LocalDateTime.MIN
+    var isThisVisible by remember {
+        mutableStateOf(false)
+    }
     records.forEach { record ->
         if (record.date < minDate) {
             minDate = record.date
@@ -84,15 +99,15 @@ fun Graph(
         if (record.date > maxDate) {
             maxDate = record.date
         }
-        val value = if (mode == "reps"){
+        val value = if (mode == "reps") {
             record.reps.toFloat()
         } else {
             record.weight
         }
-        if (value < minValue){
+        if (value < minValue) {
             minValue = value
         }
-        if (value > maxValue){
+        if (value > maxValue) {
             maxValue = value
         }
     }
@@ -101,6 +116,10 @@ fun Graph(
     val dateTimeFormatterYear: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yy")
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    var pressOffset by remember {
+        mutableStateOf(DpOffset.Zero)
+    }
+
     Box(
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 12.dp)
@@ -109,11 +128,10 @@ fun Graph(
             },
         contentAlignment = Alignment.Center
     ) {
+
         val textMeasurer = rememberTextMeasurer()
         val configuration = LocalConfiguration.current
-        var pressOffset by remember {
-            mutableStateOf(DpOffset.Zero)
-        }
+
 
         val screenHeight: Float = boxSize.height.toFloat()
         val screenWidth: Float = boxSize.width.toFloat()
@@ -122,10 +140,10 @@ fun Graph(
         val paddingX1: Dp = 30.dp
         val paddingY0: Dp = 50.dp
         val paddingY1: Dp = 10.dp
-        val paddingX0Px = with(LocalDensity.current) {paddingX0.toPx()}
-        val paddingX1Px = with(LocalDensity.current) {paddingX1.toPx()}
-        val paddingY0Px = with(LocalDensity.current) {paddingY0.toPx()}
-        val paddingY1Px = with(LocalDensity.current) {paddingY1.toPx()}
+        val paddingX0Px = with(LocalDensity.current) { paddingX0.toPx() }
+        val paddingX1Px = with(LocalDensity.current) { paddingX1.toPx() }
+        val paddingY0Px = with(LocalDensity.current) { paddingY0.toPx() }
+        val paddingY1Px = with(LocalDensity.current) { paddingY1.toPx() }
 
         val xAxisSpace = (screenWidth - paddingX0Px - paddingX1Px)
         val yAxisSpace = (screenHeight - paddingY0Px - paddingY1Px)
@@ -137,16 +155,20 @@ fun Graph(
             maxValueInt += 1
         }
         var reduceMin = true
-        val divisionValue = if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
-            200
-        } else {
-            100
-        }
+        val divisionValue =
+            if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE) {
+                200
+            } else {
+                100
+            }
         val numMarksY: Int = (yAxisSpace / divisionValue).roundToInt()
         val numMarksX: Int = (xAxisSpace / 300).roundToInt()
-        while((maxValueInt - minValueInt) % numMarksY != 0) {
-            if (reduceMin && minValueInt > 0) {minValueInt -= 1}
-            else if (!reduceMin) {maxValueInt += 1}
+        while ((maxValueInt - minValueInt) % numMarksY != 0) {
+            if (reduceMin && minValueInt > 0) {
+                minValueInt -= 1
+            } else if (!reduceMin) {
+                maxValueInt += 1
+            }
             reduceMin = !reduceMin
         }
         val intervalY: Int = (maxValueInt - minValueInt) / numMarksY
@@ -161,24 +183,27 @@ fun Graph(
             return time.format(dateTimeFormatterMonth)
         }
 
-        fun getXYValuesRecord(record: ExerciseRecord): Array<Float>{
+        fun getXYValuesRecord(record: ExerciseRecord): Array<Float> {
             val date: Long = ChronoUnit.MINUTES.between(minDate, record.date)
-            val value = if (mode == "reps"){
+            val value = if (mode == "reps") {
                 record.reps.toFloat()
             } else {
                 record.weight
             }
             val x1: Float = xAxisSpace * date / minutesBetween + paddingX0Px
-            Log.d("DEBUG", minValueInt.toString() + " " + maxValueInt.toString() + " " + value.toString() + " | " + ((value - minValueInt) / (maxValueInt - minValueInt)).toString())
+            Log.d(
+                "DEBUG",
+                minValueInt.toString() + " " + maxValueInt.toString() + " " + value.toString() + " | " + ((value - minValueInt) / (maxValueInt - minValueInt)).toString()
+            )
             var y1: Float = yAxisSpace * (1 - (value - minValueInt) / (maxValueInt - minValueInt))
-            if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE){
+            if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE) {
                 y1 = yAxisSpace - y1
             }
 
             return arrayOf(x1, y1)
         }
 
-        fun getInitialPositions(records: List<ExerciseRecord>): ArrayList<Array<Float>>  {
+        fun getInitialPositions(records: List<ExerciseRecord>): ArrayList<Array<Float>> {
             val positions = ArrayList<Array<Float>>()
             for (i in records.indices) {
                 positions.add(getXYValuesRecord(records[i]))
@@ -188,41 +213,59 @@ fun Graph(
 
         val positions = getInitialPositions(records)
 
+        if (!state.isBoxVisible) {
+            isThisVisible = false
+        }
+
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(screenHeight) {
+                .pointerInput(screenHeight, state) {
                     detectTapGestures(
                         onTap = {
-                            pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
-                            var closest: Int = -1
-                            var distance: Float = Float.MAX_VALUE
-                            for (i in coordinates.indices) {
-                                val d: Float = sqrt(
-                                    ((positions[i][0] - pressOffset.x.toPx()) * (positions[i][0] - pressOffset.x.toPx())) +
-                                            ((positions[i][1] - pressOffset.y.toPx()) * (positions[i][1] - pressOffset.y.toPx()))
-                                )
-                                if (d < distance) {
-                                    distance = d
-                                    closest = i
-                                }
-                            }
-                            Log.d("Closest", closest.toString())
-                            if (distance < 150) {
-                                onEvent(GraphEvent.SetSelectedPoint(closest))
-                            } else {
+                            if (state.isBoxVisible) {
+                                onEvent(GraphEvent.SetBoxVisibility(false))
                                 onEvent(GraphEvent.SetSelectedPoint(-1))
+                            } else {
+                                isThisVisible = true
+                                pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                                var closest: Int = -1
+                                var distance: Float = Float.MAX_VALUE
+                                for (i in positions.indices) {
+                                    val d: Float = sqrt(
+                                        ((positions[i][0] - pressOffset.x.toPx()) * (positions[i][0] - pressOffset.x.toPx())) +
+                                                ((positions[i][1] - pressOffset.y.toPx()) * (positions[i][1] - pressOffset.y.toPx()))
+                                    )
+                                    if (d < distance) {
+                                        distance = d
+                                        closest = i
+                                    }
+                                }
+                                Log.d("Closest", closest.toString())
+                                if (distance < 150) {
+                                    onEvent(GraphEvent.SetSelectedPoint(closest))
+                                    onEvent(GraphEvent.SetBoxVisibility(true))
+                                    onGraphClick(DpOffset(it.x.toDp(), it.y.toDp()))
+                                } else {
+                                    onEvent(GraphEvent.SetSelectedPoint(-1))
+                                    //onEvent(GraphEvent.SetBoxVisibility(false))
+                                }
+
                             }
                         }
                     )
                 })
-            {
+        {
             var j = 0
             while (j < numMarksX + 1) {
-                val measuredText: TextLayoutResult = textMeasurer.measure(AnnotatedString(formatTime(j)))
-                drawText(textMeasurer, formatTime(j),
-                    Offset(xAxisSpace / numMarksX * (j) - measuredText.getLineRight(0) / 2 + paddingX0.toPx(),
-                        screenHeight - 50),
+                val measuredText: TextLayoutResult =
+                    textMeasurer.measure(AnnotatedString(formatTime(j)))
+                drawText(
+                    textMeasurer, formatTime(j),
+                    Offset(
+                        xAxisSpace / numMarksX * (j) - measuredText.getLineRight(0) / 2 + paddingX0.toPx(),
+                        screenHeight - 50
+                    ),
                     style = TextStyle.Default.copy(color = onBackgroundColor)
                 )
                 j += 1
@@ -235,9 +278,11 @@ fun Graph(
                 drawText(
                     textMeasurer,
                     text,
-                    Offset(0f,
+                    Offset(
+                        0f,
                         screenHeight - yAxisSpace / numMarksY * (j) -
-                            measuredText.getLineBottom(0) - paddingY0.toPx()),
+                                measuredText.getLineBottom(0) - paddingY0.toPx()
+                    ),
                     style = TextStyle.Default.copy(color = onBackgroundColor)
                 )
                 j += 1
@@ -253,11 +298,12 @@ fun Graph(
             drawText(
                 textMeasurer,
                 title,
-                Offset(xAxisSpace - measuredText.getLineRight(0) + paddingX0.toPx() ,
-                    yAxisSpace - paddingY1.toPx()),
+                Offset(
+                    xAxisSpace - measuredText.getLineRight(0) + paddingX0.toPx(),
+                    yAxisSpace - paddingY1.toPx()
+                ),
                 style = TextStyle.Default.copy(color = onBackgroundColor)
             )
-
 
 
             /** Draw coordinate axis */
@@ -271,8 +317,6 @@ fun Graph(
             }
 
 
-
-
             /** placing points */
             for (i in records.indices) {
                 val pos: Array<Float> = positions[i]
@@ -282,14 +326,14 @@ fun Graph(
 
 
 
-                coordinates.add(PointF(x1,y1))
+                coordinates.add(PointF(x1, y1))
 
                 Log.d("ClosestIn", "${coordinates[i].x} ${coordinates[i].y}")
                 /** drawing circles to indicate all the points */
                 drawCircle(
-                    color = if (state.selectedPoint == i) Color.Red else color,
+                    color = color,
                     radius = if (state.selectedPoint == i) 15f else 5f,
-                    center = Offset(x1,y1)
+                    center = Offset(x1, y1)
                 )
                 if (mode != "reps") {
                     Log.d("coordinates", i.toString() + " " + PointF(x1, y1).toString())
@@ -297,14 +341,24 @@ fun Graph(
             }
 
 
-
             val controlPoints1: ArrayList<PointF> = ArrayList()
             val controlPoints2: ArrayList<PointF> = ArrayList()
 
             for (i in 1 until coordinates.size) {
-                controlPoints1.add(PointF((coordinates[i].x + coordinates[i - 1].x) / 2, coordinates[i - 1].y))
-                controlPoints2.add(PointF((coordinates[i].x + coordinates[i - 1].x) / 2, coordinates[i].y))
+                controlPoints1.add(
+                    PointF(
+                        (coordinates[i].x + coordinates[i - 1].x) / 2,
+                        coordinates[i - 1].y
+                    )
+                )
+                controlPoints2.add(
+                    PointF(
+                        (coordinates[i].x + coordinates[i - 1].x) / 2,
+                        coordinates[i].y
+                    )
+                )
             }
+
             if (coordinates.size > 1) {
                 val stroke = Path().apply {
                     reset()
@@ -316,7 +370,7 @@ fun Graph(
                     }
                 }
 
-                 drawPath(
+                drawPath(
                     stroke,
                     color = color,
                     style = Stroke(
@@ -328,14 +382,17 @@ fun Graph(
                 val fillPath = android.graphics.Path(stroke.asAndroidPath())
                     .asComposePath()
                     .apply {
-                        lineTo(getXYValuesRecord(records[records.size - 1])[0], size.height - paddingY0.toPx())
+                        lineTo(
+                            getXYValuesRecord(records[records.size - 1])[0],
+                            size.height - paddingY0.toPx()
+                        )
                         lineTo(paddingX0.toPx(), size.height - paddingY0.toPx())
                         close()
                     }
                 drawPath(
                     fillPath,
                     brush = Brush.verticalGradient(
-                       listOf(
+                        listOf(
                             color,
                             Color.Transparent,
                         ),
@@ -354,79 +411,217 @@ fun Graph(
 
             }
         }
+
     }
+    Log.d("TEST", state.isBoxVisible.toString())
+
 }
 
 @ExperimentalMaterial3Api
 @Composable
-fun GraphScreen (
+fun GraphScreen(
     db: Database,
     exerciseId: String = "0"
-    ) {
-    val graphViewModel = GraphViewModel(db.exerciseDao,db.exerciseRecordDao, exerciseId.toInt())
+) {
+    val graphViewModel = GraphViewModel(db.exerciseDao, db.exerciseRecordDao, exerciseId.toInt())
     val state = graphViewModel.state.collectAsState()
     val onEvent: (GraphEvent) -> Unit = graphViewModel::onEvent
+    val density = LocalDensity.current
+    var pressOffset by remember {
+        mutableStateOf(DpOffset.Zero)
+    }
 
-    Scaffold { padding ->
-        Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))){
+    var itemHeight by remember {
+        mutableStateOf(0.dp)
+    }
+    var cardHeight by remember {
+        mutableStateOf(0.dp)
+    }
 
-            Row {
-                ElevatedCard(modifier = Modifier.wrapContentSize(),
+    var cardSubHeight by remember {
+        mutableStateOf(0.dp)
+    }
 
-                             shape= CutCornerShape(15,0,15,0),
-                             colors=CardDefaults.cardColors(containerColor = Color(state.value.exercise.muscleGroup.color))) {
-                    Box (contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .fillMaxWidth()){
-                        Text(state.value.exercise.exercise.name,
-                             style = MaterialTheme.typography.headlineSmall,
-                             modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
-                             color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
+    val stableItemHeight = rememberUpdatedState(itemHeight)
+    val stableCardHeight = rememberUpdatedState(cardHeight)
+    val stableCardSubHeight = rememberUpdatedState(cardHeight)
+
+
+    Log.d("AYYITEMHEIGHT", itemHeight.toString())
+
+    Box(modifier = Modifier.pointerInput(null) {
+        detectTapGestures(
+            onTap = {
+                Log.d("ONTAP", DpOffset(it.x.toDp(), it.y.toDp()).toString())
+
+                if (state.value.isBoxVisible) {
+                    onEvent(GraphEvent.SetBoxVisibility(false))
+                } else {
+                    pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                }
+            })
+    }) {
+        Scaffold { padding ->
+            Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))) {
+
+                Row(modifier = Modifier.onSizeChanged {
+                    cardHeight = with(density) { it.height.toDp() }
+                })
+                {
+                    ElevatedCard(
+                        modifier = Modifier.wrapContentSize(),
+
+                        shape = CutCornerShape(15, 0, 15, 0),
+                        colors = CardDefaults.cardColors(containerColor = Color(state.value.exercise.muscleGroup.color))
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .fillMaxWidth()
+                        ) {
+                            Text(
+                                state.value.exercise.exercise.name,
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
+                                color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
                                 else MaterialTheme.colorScheme.onBackground,
-                             textAlign = TextAlign.Center)
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
+                }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(PaddingValues(0.dp, 8.dp, 0.dp, 0.dp))
+                        .onSizeChanged {
+                            cardSubHeight = with(density) { it.height.toDp() }
+                        }
+
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(state.value.exercise.muscleGroup.name)
                     }
                 }
-
-            }
-            Row(horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PaddingValues(0.dp, 8.dp, 0.dp, 0.dp))) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(state.value.exercise.muscleGroup.name)
-                }
-            }
-            Row(modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)) {
-                if (state.value.exerciseRecords.size < 2){
-                    Box (modifier = Modifier
+                Row(
+                    modifier = Modifier
                         .fillMaxSize()
-                        .align(Alignment.CenterVertically),
-                    contentAlignment = Alignment.Center
-                    ) {
-                        Text("Weight: Not enough records yet", textAlign = TextAlign.Center)
-                    }
-                } else {
+                        .weight(1f)
+                        .onSizeChanged {
+                            itemHeight = with(density) { it.height.toDp() }
+                        }
+                ) {
+                    if (state.value.exerciseRecords.size < 2) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .align(Alignment.CenterVertically),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Weight: Not enough records yet", textAlign = TextAlign.Center)
+                        }
+                    } else {
 
-                    Graph(state.value.exerciseRecords, "weight", color = Color(state.value.exercise.muscleGroup.color), state.value, onEvent)
+                        Graph(
+                            state.value.exerciseRecords,
+                            "weight",
+                            color = Color(state.value.exercise.muscleGroup.color),
+                            state.value,
+                            onEvent
+                        ) { offset: DpOffset ->
+                            pressOffset = offset +
+                                    DpOffset(0.dp, stableCardHeight.value) +
+                                    DpOffset(0.dp, stableCardSubHeight.value)
+                        }
+                    }
                 }
-            }
-            Row(modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)) {
-                if (state.value.exerciseRecords.size < 2){
-                    Box (modifier = Modifier
+                Row(
+                    modifier = Modifier
                         .fillMaxSize()
-                        .align(Alignment.CenterVertically),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Reps: Not enough records yet", textAlign = TextAlign.Center)
-                    }
-                } else {
+                        .weight(1f)
+                ) {
+                    if (state.value.exerciseRecords.size < 2) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .align(Alignment.CenterVertically),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Reps: Not enough records yet", textAlign = TextAlign.Center)
+                        }
+                    } else {
+                        Graph(
+                            state.value.exerciseRecords,
+                            "reps",
+                            color = Color(state.value.exercise.muscleGroup.color),
+                            state.value,
+                            onEvent
+                        ) { offset: DpOffset ->
+                            pressOffset =
+                                offset + DpOffset(0.dp, stableItemHeight.value) +
+                                        DpOffset(0.dp, stableCardHeight.value) +
+                                        DpOffset(0.dp, stableCardSubHeight.value)
 
-                    Graph(state.value.exerciseRecords, "reps", color = Color(state.value.exercise.muscleGroup.color), state.value, onEvent)
+                        }
+                    }
+                }
+
+
+            }
+            val alpha by animateFloatAsState(if (state.value.isBoxVisible) 1f else 0f)
+            val scale by animateFloatAsState(if (state.value.isBoxVisible) 1f else 0f)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .offset(pressOffset.x, pressOffset.y)
+                        .alpha(alpha)
+                        .clip(RoundedCornerShape(20))
+                        .background(color = MaterialTheme.colorScheme.background)
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale
+                        )
+                        .border(
+                            width = 1.dp, // Width of the border
+                            color = MaterialTheme.colorScheme.onBackground, // Color of the border
+                            shape = RoundedCornerShape(20) // Optional: You can specify the shape of the border
+                        )
+
+                ) {
+                    Column(modifier = Modifier.padding(10.dp, 10.dp)) {
+
+                        if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
+                            Row() {
+                                Text("Weight: ${state.value.exerciseRecords[state.value.selectedPoint].weight}kg")
+                            }
+                            Row() {
+                                Text("Reps: ${state.value.exerciseRecords[state.value.selectedPoint].reps}")
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+
+                            Button(
+                                onClick = {
+                                    if (state.value.isBoxVisible) {
+                                        onEvent(GraphEvent.DeleteRecord(state.value.exerciseRecords[state.value.selectedPoint]))
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                            ) {
+                                Text("Delete", color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                        }
+                    }
+
                 }
             }
         }

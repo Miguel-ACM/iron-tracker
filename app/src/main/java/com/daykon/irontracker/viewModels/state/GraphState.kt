@@ -17,5 +17,6 @@ data class GraphState(
             //ExerciseWithMuscleGroup = ,
     val startDateTime: LocalDateTime = LocalDateTime.now().minusYears(10),
     val endDateTime: LocalDateTime = LocalDateTime.now().plusYears(1),
-    val muscleGroupId: Int = 0
+    val muscleGroupId: Int = 0,
+    val isBoxVisible: Boolean = false
 )

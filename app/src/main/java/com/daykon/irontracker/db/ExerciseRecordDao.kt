@@ -1,6 +1,7 @@
 package com.daykon.irontracker.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Insert
 import kotlinx.coroutines.flow.Flow
@@ -25,4 +26,6 @@ interface ExerciseRecordDao {
 
     @Query("SELECT * FROM exerciseRecord WHERE exerciseId = :exerciseId ORDER BY date ASC ")
     fun getAllExerciseRecordsForExercise(exerciseId: Int): Flow<List<ExerciseRecord>>
+    @Delete
+    suspend fun deleteRecord(exerciseRecord: ExerciseRecord)
 }

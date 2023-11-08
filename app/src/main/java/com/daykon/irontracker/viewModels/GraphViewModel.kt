@@ -107,6 +107,25 @@ class GraphViewModel (
                     )
                 }
             }
+
+            is GraphEvent.SetBoxVisibility ->
+            {
+                Log.d("TEST2", event.isVisible.toString())
+                _state.update {
+                    it.copy(
+                        isBoxVisible = event.isVisible
+                    )
+                }
+
+            }
+
+            is GraphEvent.DeleteRecord -> {
+                viewModelScope.launch {
+                    exerciseRecordDao.deleteRecord(
+                        event.event
+                    )
+                }
+            }
         }
     }
 }
