@@ -3,6 +3,7 @@ package com.daykon.irontracker.screens
 import android.content.res.Configuration
 import android.graphics.PointF
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -72,6 +73,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import com.daykon.irontracker.viewModels.events.GraphEvent
 import kotlin.math.sqrt
 
@@ -448,6 +450,7 @@ fun GraphScreen(
     var boxSizeY by remember {
         mutableStateOf(0.dp)
     }
+    val context = LocalContext.current
     val scaffoldPadding: Dp = 8.dp
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -532,7 +535,7 @@ fun GraphScreen(
                                 .align(Alignment.CenterVertically),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Weight: Not enough records yet", textAlign = TextAlign.Center)
+                            Text("Not enough records yet", textAlign = TextAlign.Center)
                         }
                     } else {
 
@@ -569,7 +572,7 @@ fun GraphScreen(
                                 .align(Alignment.CenterVertically),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Reps: Not enough records yet", textAlign = TextAlign.Center)
+                            Text("Add at least 2 records", textAlign = TextAlign.Center)
                         }
                     } else {
                         Graph(
@@ -665,6 +668,8 @@ fun GraphScreen(
                                 onClick = {
                                     if (state.value.isBoxVisible) {
                                         onEvent(GraphEvent.DeleteRecord(state.value.exerciseRecords[state.value.selectedPoint]))
+                                        onEvent(GraphEvent.SetBoxVisibility(false))
+                                        Toast.makeText(context, "Exercise record deleted", Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
