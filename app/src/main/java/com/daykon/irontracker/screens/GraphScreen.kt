@@ -225,7 +225,7 @@ fun Graph(
                         onTap = {
                             if (state.isBoxVisible) {
                                 onEvent(GraphEvent.SetBoxVisibility(false))
-                                onEvent(GraphEvent.SetSelectedPoint(-1))
+                                //onEvent(GraphEvent.SetSelectedPoint(-1))
                             } else {
                                 isThisVisible = true
                                 pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
@@ -245,7 +245,7 @@ fun Graph(
                                 if (distance < 150) {
                                     onEvent(GraphEvent.SetSelectedPoint(closest))
                                     onEvent(GraphEvent.SetBoxVisibility(true))
-                                    onGraphClick(DpOffset(it.x.toDp(), it.y.toDp()))
+                                    onGraphClick(DpOffset(positions[closest][0].toDp(), positions[closest][1].toDp()))
                                 } else {
                                     onEvent(GraphEvent.SetSelectedPoint(-1))
                                     //onEvent(GraphEvent.SetBoxVisibility(false))
@@ -437,10 +437,19 @@ fun GraphScreen(
     var cardHeight by remember {
         mutableStateOf(0.dp)
     }
-
     var cardSubHeight by remember {
         mutableStateOf(0.dp)
     }
+    var boxSizeX by remember {
+        mutableStateOf(0.dp)
+    }
+    var boxSizeY by remember {
+        mutableStateOf(0.dp)
+    }
+    val scaffoldPadding: Dp = 8.dp
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
 
     val stableItemHeight = rememberUpdatedState(itemHeight)
     val stableCardHeight = rememberUpdatedState(cardHeight)
@@ -462,7 +471,7 @@ fun GraphScreen(
             })
     }) {
         Scaffold { padding ->
-            Column(modifier = Modifier.padding(PaddingValues(8.dp, 8.dp, 8.dp, 0.dp))) {
+            Column(modifier = Modifier.padding(PaddingValues(scaffoldPadding, scaffoldPadding, scaffoldPadding, 0.dp))) {
 
                 Row(modifier = Modifier.onSizeChanged {
                     cardHeight = with(density) { it.height.toDp() }
@@ -532,9 +541,17 @@ fun GraphScreen(
                             state.value,
                             onEvent
                         ) { offset: DpOffset ->
-                            pressOffset = offset +
+                            var ofs: DpOffset = offset +
                                     DpOffset(0.dp, stableCardHeight.value) +
-                                    DpOffset(0.dp, stableCardSubHeight.value)
+                                    DpOffset(0.dp, stableCardSubHeight.value)  +
+                                    DpOffset(scaffoldPadding + 6.dp, scaffoldPadding + 2.dp)
+                            if (ofs.x > screenWidth / 2) {
+                                ofs = DpOffset(ofs.x - boxSizeX - 12.dp, ofs.y)
+                            }
+                            if (ofs.y > screenHeight / 2) {
+                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY)
+                            }
+                            pressOffset = ofs
                         }
                     }
                 }
@@ -560,11 +577,18 @@ fun GraphScreen(
                             state.value,
                             onEvent
                         ) { offset: DpOffset ->
-                            pressOffset =
-                                offset + DpOffset(0.dp, stableItemHeight.value) +
-                                        DpOffset(0.dp, stableCardHeight.value) +
-                                        DpOffset(0.dp, stableCardSubHeight.value)
 
+                            var ofs: DpOffset = offset + DpOffset(0.dp, stableItemHeight.value) +
+                                    DpOffset(0.dp, stableCardHeight.value) +
+                                    DpOffset(0.dp, stableCardSubHeight.value) +
+                                    DpOffset(scaffoldPadding + 6.dp, scaffoldPadding + 2.dp)
+                            if (ofs.x > screenWidth / 2) {
+                                ofs = DpOffset(ofs.x - boxSizeX - 12.dp, ofs.y)
+                            }
+                            if (ofs.y > screenHeight / 2) {
+                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY)
+                            }
+                            pressOffset = ofs
                         }
                     }
                 }
@@ -577,6 +601,7 @@ fun GraphScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+
             ) {
                 Box(
                     modifier = Modifier
@@ -585,14 +610,17 @@ fun GraphScreen(
                         .clip(RoundedCornerShape(20))
                         .background(color = MaterialTheme.colorScheme.background)
                         .graphicsLayer(
-                            scaleX = scale,
+                            scaleX = 1f,
                             scaleY = scale
                         )
                         .border(
                             width = 1.dp, // Width of the border
                             color = MaterialTheme.colorScheme.onBackground, // Color of the border
                             shape = RoundedCornerShape(20) // Optional: You can specify the shape of the border
-                        )
+                        ).onSizeChanged {
+                            boxSizeX = with(density) { it.height.toDp() }
+                            boxSizeY = with(density) { it.width.toDp() }
+                        }
 
                 ) {
                     Column(modifier = Modifier.padding(10.dp, 10.dp)) {
