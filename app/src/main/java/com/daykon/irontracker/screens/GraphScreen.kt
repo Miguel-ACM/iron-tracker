@@ -427,6 +427,8 @@ fun GraphScreen(
     val state = graphViewModel.state.collectAsState()
     val onEvent: (GraphEvent) -> Unit = graphViewModel::onEvent
     val density = LocalDensity.current
+    val dateTimeFormatterYear: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yy")
+
     var pressOffset by remember {
         mutableStateOf(DpOffset.Zero)
     }
@@ -549,7 +551,7 @@ fun GraphScreen(
                                 ofs = DpOffset(ofs.x - boxSizeX - 12.dp, ofs.y)
                             }
                             if (ofs.y > screenHeight / 2) {
-                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY)
+                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY - 24.dp)
                             }
                             pressOffset = ofs
                         }
@@ -586,7 +588,7 @@ fun GraphScreen(
                                 ofs = DpOffset(ofs.x - boxSizeX - 12.dp, ofs.y)
                             }
                             if (ofs.y > screenHeight / 2) {
-                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY)
+                                ofs = DpOffset(ofs.x, ofs.y - boxSizeY - 24.dp)
                             }
                             pressOffset = ofs
                         }
@@ -617,22 +619,44 @@ fun GraphScreen(
                             width = 1.dp, // Width of the border
                             color = MaterialTheme.colorScheme.onBackground, // Color of the border
                             shape = RoundedCornerShape(20) // Optional: You can specify the shape of the border
-                        ).onSizeChanged {
-                            boxSizeX = with(density) { it.height.toDp() }
-                            boxSizeY = with(density) { it.width.toDp() }
-                        }
+                        )
 
                 ) {
-                    Column(modifier = Modifier.padding(10.dp, 10.dp)) {
+                    Column(modifier = Modifier.padding(10.dp, 10.dp).onSizeChanged {
+                        boxSizeX = with(density) { it.width.toDp() }
+                        boxSizeY = with(density) { it.height.toDp() }
+                    }) {
 
-                        if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
+
                             Row() {
-                                Text("Weight: ${state.value.exerciseRecords[state.value.selectedPoint].weight}kg")
+                                if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
+                                    Text("Weight: ${state.value.exerciseRecords[state.value.selectedPoint].weight}kg")
+                                } else {
+                                    Text("Weight")
+                                }
                             }
                             Row() {
-                                Text("Reps: ${state.value.exerciseRecords[state.value.selectedPoint].reps}")
+                                if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
+                                    Text("Reps: ${state.value.exerciseRecords[state.value.selectedPoint].reps}")
+                                } else {
+                                    Text("Reps")
+                                }
                             }
-                        }
+                            Row() {
+                                if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
+                                    Text(
+                                        "Date: ${
+                                            state.value.exerciseRecords[state.value.selectedPoint].date.format(
+                                                dateTimeFormatterYear
+                                            )
+                                        }"
+                                    )
+                                } else {
+                                    Text("Date")
+                                }
+                            }
+
+
                         Row(
                             horizontalArrangement = Arrangement.Center
                         ) {
@@ -646,6 +670,13 @@ fun GraphScreen(
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                             ) {
                                 Text("Delete", color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                            Button(
+                                onClick = {
+                                },
+                                modifier = Modifier.padding(start=10.dp)
+                            ) {
+                                Text("Save")
                             }
                         }
                     }
