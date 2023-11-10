@@ -663,7 +663,7 @@ fun GraphScreen(
                                 )
                                 Text("kg", modifier=Modifier.padding(start=10.dp))
                             }
-                            Row() {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Reps:", modifier=Modifier.padding(end=10.dp))
                                 BasicTextField(
                                     modifier = Modifier
