@@ -12,6 +12,15 @@ interface ExerciseRecordDao {
     @Insert
     suspend fun insertExerciseRecord(exerciseRecord: ExerciseRecord)
 
+    @Query("UPDATE ExerciseRecord SET weight =:weight WHERE id = :exerciseId")
+    fun updateWeight(exerciseId: Int, weight: Float)
+
+    @Query("UPDATE ExerciseRecord SET reps = :reps WHERE id = :exerciseId")
+    fun updateReps(exerciseId: Int, reps: Int)
+
+    @Query("UPDATE ExerciseRecord SET reps = :reps, weight = :weight  WHERE id = :exerciseId")
+    fun update(exerciseId: Int, reps: Int, weight: Float)
+
     @Query("SELECT * FROM exerciseRecord WHERE exerciseId = :exerciseId ORDER BY date DESC")
     fun getExerciseRecords(exerciseId: Int): Flow<List<ExerciseRecord>>
 

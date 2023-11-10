@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class GraphViewModel (
     private val exerciseDao: ExerciseDao,
@@ -37,11 +36,12 @@ class GraphViewModel (
     val state = combine(_state, _exerciseRecords, _exerciseWithMuscleGroup) { state,
                                                                               exerciseRecords,
                                                                               exercise ->
+        Log.d("FlowDebug", "Exercise Records size: ${exerciseRecords.size}")
         state.copy(
             exerciseRecords = exerciseRecords,
             exercise = exercise,
-
         )
+
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), GraphState())
 
 
@@ -101,9 +101,54 @@ class GraphViewModel (
             }
 
             is GraphEvent.SetSelectedPoint -> {
+                var reps = 0
+                var weight = 0f
+                Log.d("POINTO", "${event.point} ${state.value.exerciseRecords}")
+                if (event.point >= 0 && event.point < state.value.exerciseRecords.size) {
+                    reps = state.value.exerciseRecords[event.point].reps
+                    weight = state.value.exerciseRecords[event.point].weight
+                }
                 _state.update {
                     it.copy(
-                        selectedPoint = event.point
+                        selectedPoint = event.point,
+                        selectedPointReps = reps.toString(),
+                        selectedPointWeight = weight.toString(),
+                    )
+                }
+            }
+
+            is GraphEvent.SetWeight -> {
+                val weight: String = event.weight.replace(Regex("[^0-9.,]"), "")
+                _state.update {
+                    it.copy (
+                        selectedPointWeight = weight,
+                    )
+                }
+            }
+
+            is GraphEvent.SetReps -> {
+                val reps: String = event.reps.replace(Regex("[^0-9]"), "")
+                _state.update {
+                    it.copy (
+                        selectedPointReps = reps,
+                    )
+                }
+            }
+
+            GraphEvent.UpdateRecord -> {
+                val maxReps: String = state.value.selectedPointReps
+                val maxWeight: String = state.value.selectedPointWeight.replace(",", ".")
+                val exerciseRecordId = state.value.exerciseRecords[state.value.selectedPoint].id
+                if (maxReps.toFloatOrNull() == null || maxReps.toFloat() < 0.6f
+                    || maxWeight.toFloatOrNull() == null){
+                    return
+                }
+
+                viewModelScope.launch(Dispatchers.IO) {
+                    exerciseRecordDao.update(
+                        exerciseId = exerciseRecordId,
+                        weight = maxWeight.toFloat(),
+                        reps = maxReps.toInt()
                     )
                 }
             }

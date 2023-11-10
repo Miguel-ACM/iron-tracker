@@ -14,6 +14,8 @@ data class GraphState(
         MuscleGroup(0, "", 0, extraSearch = "", orderIndex = 0f)
     ),
     val selectedPoint: Int = -1,
+    val selectedPointWeight: String = "",
+    val selectedPointReps: String = "",
             //ExerciseWithMuscleGroup = ,
     val startDateTime: LocalDateTime = LocalDateTime.now().minusYears(10),
     val endDateTime: LocalDateTime = LocalDateTime.now().plusYears(1),

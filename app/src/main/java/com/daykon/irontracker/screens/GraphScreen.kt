@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -74,6 +74,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import com.daykon.irontracker.viewModels.events.GraphEvent
 import kotlin.math.sqrt
 
@@ -218,7 +219,7 @@ fun Graph(
         if (!state.isBoxVisible) {
             isThisVisible = false
         }
-
+        val focusManager = LocalFocusManager.current
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -227,6 +228,7 @@ fun Graph(
                         onTap = {
                             if (state.isBoxVisible) {
                                 onEvent(GraphEvent.SetBoxVisibility(false))
+                                focusManager.clearFocus()
                                 //onEvent(GraphEvent.SetSelectedPoint(-1))
                             } else {
                                 isThisVisible = true
@@ -460,6 +462,9 @@ fun GraphScreen(
     val stableCardHeight = rememberUpdatedState(cardHeight)
     val stableCardSubHeight = rememberUpdatedState(cardHeight)
 
+    val focusManager = LocalFocusManager.current
+
+
 
     Log.d("AYYITEMHEIGHT", itemHeight.toString())
 
@@ -470,6 +475,7 @@ fun GraphScreen(
 
                 if (state.value.isBoxVisible) {
                     onEvent(GraphEvent.SetBoxVisibility(false))
+                    focusManager.clearFocus()
                 } else {
                     pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
                 }
@@ -612,7 +618,7 @@ fun GraphScreen(
                     modifier = Modifier
                         .offset(pressOffset.x, pressOffset.y)
                         .alpha(alpha)
-                        .clip(RoundedCornerShape(20))
+                        .clip(shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),)
                         .background(color = MaterialTheme.colorScheme.background)
                         .graphicsLayer(
                             scaleX = 1f,
@@ -621,7 +627,7 @@ fun GraphScreen(
                         .border(
                             width = 1.dp, // Width of the border
                             color = MaterialTheme.colorScheme.onBackground, // Color of the border
-                            shape = RoundedCornerShape(20) // Optional: You can specify the shape of the border
+                            shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp) // Optional: You can specify the shape of the border
                         )
 
                 ) {
@@ -631,19 +637,56 @@ fun GraphScreen(
                     }) {
 
 
-                            Row() {
-                                if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
-                                    Text("Weight: ${state.value.exerciseRecords[state.value.selectedPoint].weight}kg")
-                                } else {
-                                    Text("Weight")
-                                }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Weight:", modifier=Modifier.padding(end=10.dp))
+                                BasicTextField(
+                                    modifier = Modifier
+                                        .background(
+                                            color = MaterialTheme.colorScheme.background,
+                                            shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
+                                        )
+                                        .padding(PaddingValues(5.dp, 5.dp))
+                                        .fillMaxWidth(0.15f),
+                                    value = state.value.selectedPointWeight,
+                                    onValueChange = {
+                                        onEvent(GraphEvent.SetWeight(it))
+                                    },
+                                    textStyle = TextStyle(
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    ),
+                                    decorationBox = { innerTextField ->
+                                        Row() {
+
+                                        }
+                                        innerTextField()
+                                    }
+                                )
+                                Text("kg", modifier=Modifier.padding(start=10.dp))
                             }
                             Row() {
-                                if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
-                                    Text("Reps: ${state.value.exerciseRecords[state.value.selectedPoint].reps}")
-                                } else {
-                                    Text("Reps")
-                                }
+                                Text("Reps:", modifier=Modifier.padding(end=10.dp))
+                                BasicTextField(
+                                    modifier = Modifier
+                                        .background(
+                                            color = MaterialTheme.colorScheme.background,
+                                            shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
+                                        )
+                                        .padding(PaddingValues(5.dp, 5.dp))
+                                        .fillMaxWidth(0.15f),
+                                    value = state.value.selectedPointReps,
+                                    onValueChange = {
+                                        onEvent(GraphEvent.SetReps(it))
+                                    },
+                                    textStyle = TextStyle(
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    ),
+                                    decorationBox = { innerTextField ->
+                                        Row() {
+
+                                        }
+                                        innerTextField()
+                                    }
+                                )
                             }
                             Row() {
                                 if (state.value.selectedPoint >= 0 && state.value.selectedPoint < state.value.exerciseRecords.size) {
@@ -661,24 +704,33 @@ fun GraphScreen(
 
 
                         Row(
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(top=5.dp)
                         ) {
 
                             Button(
                                 onClick = {
                                     if (state.value.isBoxVisible) {
                                         onEvent(GraphEvent.DeleteRecord(state.value.exerciseRecords[state.value.selectedPoint]))
+                                        focusManager.clearFocus()
                                         onEvent(GraphEvent.SetBoxVisibility(false))
                                         Toast.makeText(context, "Exercise record deleted", Toast.LENGTH_SHORT).show()
+
                                     }
                                 },
+                                shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                             ) {
                                 Text("Delete", color = MaterialTheme.colorScheme.onErrorContainer)
                             }
                             Button(
                                 onClick = {
+                                    onEvent(GraphEvent.UpdateRecord)
+                                    focusManager.clearFocus()
+                                    onEvent(GraphEvent.SetBoxVisibility(false))
+                                    Toast.makeText(context, "Exercise record updated", Toast.LENGTH_SHORT).show()
                                 },
+                                shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
                                 modifier = Modifier.padding(start=10.dp)
                             ) {
                                 Text("Save")
