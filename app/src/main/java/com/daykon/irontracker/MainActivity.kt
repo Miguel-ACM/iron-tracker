@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.daykon.irontracker.db.Database
+import com.daykon.irontracker.db.MIGRATION_2_3
 import com.daykon.irontracker.screens.CameraScreen
 import com.daykon.irontracker.viewModels.ExerciseViewModel
 import com.daykon.irontracker.screens.GraphScreen
@@ -26,54 +27,55 @@ import com.daykon.irontracker.ui.theme.IronTrackerTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val db by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            Database::class.java,
-            "ironTracker.db"
-        ).createFromAsset("ironTracker.db").build()
-    }
+  private val db by lazy {
+    Room.databaseBuilder(
+        applicationContext,
+        Database::class.java,
+        "ironTracker.db"
+    ).addMigrations(MIGRATION_2_3)
+        .createFromAsset("ironTracker.db").build()
+  }
 
-    private val exerciseViewModel by viewModels<ExerciseViewModel>(
-        factoryProducer = {
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return ExerciseViewModel(db.exerciseDao, db.exerciseRecordDao, db.muscleGroupDao) as T
-                }
-            }
+  private val exerciseViewModel by viewModels<ExerciseViewModel>(
+      factoryProducer = {
+        object : ViewModelProvider.Factory {
+          override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return ExerciseViewModel(db.exerciseDao, db.exerciseRecordDao, db.muscleGroupDao) as T
+          }
         }
-    )
+      }
+  )
 
 
+  @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    setContent {
+      IronTrackerTheme {
+        val exerciseState by exerciseViewModel.state.collectAsState()
+        val navController = rememberNavController()
+        NavHost(navController = navController, startDestination = "main") {
+          composable("main",
+              enterTransition = { slideIn(initialOffset = { IntOffset(-it.width, 0) }) },
+              exitTransition = { slideOut(targetOffset = { IntOffset(-it.width, 0) }) }) {
+            MainScreen(state = exerciseState, onEvent = exerciseViewModel::onEvent,
+                navController = navController)
 
-        setContent {
-            IronTrackerTheme {
-                val exerciseState by exerciseViewModel.state.collectAsState()
-                val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "main") {
-                    composable("main",
-                        enterTransition = {slideIn(initialOffset = { IntOffset(-it.width, 0) }) },
-                        exitTransition = {slideOut(targetOffset = { IntOffset(-it.width, 0)  }) }) {
-                        MainScreen(state = exerciseState, onEvent = exerciseViewModel::onEvent, navController = navController)
+          }
+          composable("graph/{exerciseId}",
+              enterTransition = { slideIn(initialOffset = { IntOffset(it.width, 0) }) },
+              exitTransition = { slideOut(targetOffset = { IntOffset(it.width, 0) }) }) {
+            GraphScreen(db = db, exerciseId = it.arguments?.getString("exerciseId") ?: "1")
+          }
+          composable("progress",
+              enterTransition = { slideIn(initialOffset = { IntOffset(it.width, 0) }) },
+              exitTransition = { slideOut(targetOffset = { IntOffset(-it.width, 0) }) }) {
+            CameraScreen(db = db, navController = navController)
 
-                    }
-                    composable("graph/{exerciseId}",
-                        enterTransition = {slideIn(initialOffset = { IntOffset(it.width, 0) }) },
-                        exitTransition = {slideOut(targetOffset = { IntOffset(it.width, 0)  }) }) {
-                        GraphScreen(db = db, exerciseId = it.arguments?.getString("exerciseId") ?: "1")
-                    }
-                    composable("progress",
-                        enterTransition = {slideIn(initialOffset = { IntOffset(it.width, 0) }) },
-                        exitTransition = {slideOut(targetOffset = { IntOffset(-it.width, 0)  }) }) {
-                        CameraScreen(db = db, navController = navController)
-
-                    }
-                }
-            }
+          }
         }
+      }
     }
+  }
 }

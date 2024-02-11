@@ -8,29 +8,21 @@ import androidx.room.Index
 import androidx.room.Relation
 
 
-@Entity(foreignKeys = [ForeignKey(entity = MuscleGroup::class,
-    parentColumns = ["id"],
-    childColumns = ["muscleGroupId"],
-    onDelete = ForeignKey.CASCADE)],
+@Entity(foreignKeys = [ForeignKey(entity = MuscleGroup::class, parentColumns = ["id"],
+    childColumns = ["muscleGroupId"], onDelete = ForeignKey.CASCADE)],
     indices = [Index(value = ["muscleGroupId"])])
 data class Exercise(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val muscleGroupId: Int,
 
-)
+    )
 
 data class ExerciseWithMuscleGroup(
-    @Embedded
-    val exercise: Exercise,
-    @Relation(
-        parentColumn = "muscleGroupId",
-        entityColumn = "id"
+    @Embedded val exercise: Exercise,
+    @Relation(parentColumn = "muscleGroupId", entityColumn = "id") val muscleGroup: MuscleGroup,
+
+
     )
-    val muscleGroup: MuscleGroup,
-
-
-)
 
 

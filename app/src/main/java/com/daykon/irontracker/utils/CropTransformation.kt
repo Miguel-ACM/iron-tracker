@@ -13,27 +13,27 @@ class CropTransformation(_top: Int,
                          _bottom: Int,
                          _left: Int) : BitmapTransformation() {
 
-    private val top = _top
-    private val left = _left
-    private val right = _right
-    private val bottom = _bottom
+  private val top = _top
+  private val left = _left
+  private val right = _right
+  private val bottom = _bottom
 
-    override fun transform(pool: BitmapPool,
-                           source: Bitmap, outWidth: Int,
-                           outHeight: Int): Bitmap {
-        val sourceRect = Rect(left, top, right, bottom)
-        val targetRect = Rect(0, 0, right-left, bottom-top)
-        val bitmap = pool.get(right - left,
-            bottom - top,
-            Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+  override fun transform(pool: BitmapPool,
+                         source: Bitmap, outWidth: Int,
+                         outHeight: Int): Bitmap {
+    val sourceRect = Rect(left, top, right, bottom)
+    val targetRect = Rect(0, 0, right - left, bottom - top)
+    val bitmap = pool.get(right - left,
+        bottom - top,
+        Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
 
-        canvas.drawBitmap(source, sourceRect, targetRect, null)
+    canvas.drawBitmap(source, sourceRect, targetRect, null)
 
-        return bitmap
-    }
+    return bitmap
+  }
 
-    override fun updateDiskCacheKey(messageDigest: MessageDigest){
-        messageDigest.update(("crop($top,$right,$bottom,$left)").toByteArray())
-    }
+  override fun updateDiskCacheKey(messageDigest: MessageDigest) {
+    messageDigest.update(("crop($top,$right,$bottom,$left)").toByteArray())
+  }
 }

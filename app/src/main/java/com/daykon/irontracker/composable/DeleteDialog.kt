@@ -21,59 +21,44 @@ import com.daykon.irontracker.db.Exercise
 
 @ExperimentalMaterial3Api
 @Composable
-fun DeleteDialog(
-    state: ExerciseState,
-    onEvent: (ExerciseRecordEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val exerciseId = state.exerciseId
-    var exercise = Exercise(0, "", 0)
-    for (e in state.exercises){
-        if (e.id == exerciseId) {
-            exercise = e
-            break
-        }
+fun DeleteDialog(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
+                 modifier: Modifier = Modifier) {
+  val exerciseId = state.exerciseId
+  var exercise = Exercise(0, "", 0)
+  for (e in state.exercises) {
+    if (e.id == exerciseId) {
+      exercise = e
+      break
+    }
+
+  }
+  val context = LocalContext.current
+  AlertDialog(modifier = modifier, onDismissRequest = {
+    onEvent(ExerciseRecordEvent.HideDeleteDialog)
+  }, title = { Text(text = "Warning!") }, text = {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Text("Are you sure you want to delete ${exercise.name}?")
 
     }
-    val context = LocalContext.current
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            onEvent(ExerciseRecordEvent.HideDeleteDialog)
-        },
-        title = { Text(text = "Warning!") },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("Are you sure you want to delete ${exercise.name}?")
+  }, confirmButton = {
+    Box(
 
-            }
-        },
-        confirmButton = {
-            Box(
-
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Button(onClick = {
-                    onEvent(ExerciseRecordEvent.DeleteExercise(exercise))
-                    onEvent(ExerciseRecordEvent.HideDeleteDialog)
-                    Toast.makeText(context, "${exercise.name} deleted", Toast.LENGTH_SHORT, ).show()
-                }) {
-                    Text(text = "Delete", color= Color.Red)
-                }
-            }
-        },
-        dismissButton = {
-            Box(
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Button(onClick = {
-                    onEvent(ExerciseRecordEvent.HideDeleteDialog)
-                }) {
-                    Text(text = "Cancel")
-                }
-            }
-        }
-    )
+        contentAlignment = Alignment.CenterEnd) {
+      Button(onClick = {
+        onEvent(ExerciseRecordEvent.DeleteExercise(exercise))
+        onEvent(ExerciseRecordEvent.HideDeleteDialog)
+        Toast.makeText(context, "${exercise.name} deleted", Toast.LENGTH_SHORT).show()
+      }) {
+        Text(text = "Delete", color = Color.Red)
+      }
+    }
+  }, dismissButton = {
+    Box(contentAlignment = Alignment.CenterEnd) {
+      Button(onClick = {
+        onEvent(ExerciseRecordEvent.HideDeleteDialog)
+      }) {
+        Text(text = "Cancel")
+      }
+    }
+  })
 }

@@ -28,79 +28,54 @@ import androidx.compose.ui.platform.LocalContext
 
 @ExperimentalMaterial3Api
 @Composable
-fun AddExerciseDialog(
-    state: ExerciseState,
-    onEvent: (ExerciseRecordEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedDropbox by remember { mutableStateOf(state.muscleGroups[state.newExerciseMuscleGroupId].name) }
-    val context = LocalContext.current
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            onEvent(ExerciseRecordEvent.HideExerciseDialog)
-        },
-        title = { Text(text = "Add exercise") },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("Name")
-                TextField(
-                    value = state.newExerciseName,
-                    onValueChange = {
-                        onEvent(ExerciseRecordEvent.SetNewExerciseName(it))
-                    },
-                    placeholder = {
-                        Text(text = "Exercise name")
-                    }
+fun AddExerciseDialog(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
+                      modifier: Modifier = Modifier) {
+  var expanded by remember { mutableStateOf(false) }
+  var selectedDropbox by remember {
+    mutableStateOf(state.muscleGroups[state.newExerciseMuscleGroupId].name)
+  }
+  val context = LocalContext.current
+  AlertDialog(modifier = modifier, onDismissRequest = {
+    onEvent(ExerciseRecordEvent.HideExerciseDialog)
+  }, title = { Text(text = "Add exercise") }, text = {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Text("Name")
+      TextField(value = state.newExerciseName, onValueChange = {
+        onEvent(ExerciseRecordEvent.SetNewExerciseName(it))
+      }, placeholder = {
+        Text(text = "Exercise name")
+      })
+      Text("Muscle group")
+      ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {
+        expanded = !expanded
+      }) {
+        TextField(value = selectedDropbox, onValueChange = {}, readOnly = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor())
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+          state.muscleGroups.forEach { muscleGroup ->
+            DropdownMenuItem(
+                text = { Text(text = muscleGroup.name) },
+                onClick = {
+                  selectedDropbox = muscleGroup.name
+                  expanded = false
+                  onEvent(ExerciseRecordEvent.SetNewExerciseMuscleGroupId(muscleGroup.id))
+                },
+
                 )
-                Text("Muscle group")
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = {
-                       expanded = !expanded
-                    }) {
-                    TextField(
-                        value = selectedDropbox,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        state.muscleGroups.forEach { muscleGroup ->
-                            DropdownMenuItem(
-                                text = { Text(text = muscleGroup.name) },
-                                onClick = {
-                                    selectedDropbox = muscleGroup.name
-                                    expanded = false
-                                    onEvent(ExerciseRecordEvent.SetNewExerciseMuscleGroupId(muscleGroup.id))
-                                },
-
-                                )
-                        }
-                    }
-                }
-
-            }
-        },
-        confirmButton = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Button(onClick = {
-                    onEvent(ExerciseRecordEvent.SaveExercise)
-                    Toast.makeText(context, "${state.newExerciseName} created", Toast.LENGTH_SHORT).show()
-                }) {
-                    Text(text = "Save")
-                }
-            }
+          }
         }
-    )
+      }
+
+    }
+  }, confirmButton = {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+      Button(onClick = {
+        onEvent(ExerciseRecordEvent.SaveExercise)
+        Toast.makeText(context, "${state.newExerciseName} created", Toast.LENGTH_SHORT).show()
+      }) {
+        Text(text = "Save")
+      }
+    }
+  })
 }

@@ -73,293 +73,211 @@ import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
 
-
-
 @OptIn(ExperimentalFoundationApi::class)
 @ExperimentalMaterial3Api
 @Composable
-fun MainScreen (
-    state: ExerciseState,
-    onEvent: (ExerciseRecordEvent) -> Unit,
-    navController: NavController
-    ) {
-    val scope = rememberCoroutineScope()
+fun MainScreen(state: ExerciseState,
+               onEvent: (ExerciseRecordEvent) -> Unit,
+               navController: NavController) {
+  val scope = rememberCoroutineScope()
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+  val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    var navigating by remember {
-        mutableStateOf(false)
-    }
+  var navigating by remember {
+    mutableStateOf(false)
+  }
 
-    Drawer(isSelected = 0,
-           drawerState = drawerState,
-           navController = navController
-    ) {
-        Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    onEvent(ExerciseRecordEvent.ShowExerciseDialog)
-                }) {
-                    Icon(imageVector = Icons.Default.Add,
-                        contentDescription = "Add Exercise")
-                }
-            },
-            topBar = {
-                TopAppBar(title = {
-                    ExpandableSearchView(state, onEvent)
+  Drawer(isSelected = 0, drawerState = drawerState, navController = navController) {
+    Scaffold(
+        floatingActionButton = {
+          FloatingActionButton(onClick = {
+            onEvent(ExerciseRecordEvent.ShowExerciseDialog)
+          }) {
+            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Exercise")
+          }
+        },
+        topBar = {
+          TopAppBar(title = {
+            ExpandableSearchView(state, onEvent)
 
-                },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                drawerState.open()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Toggle drawer"
-                            )
-                        }
-                    })
-
-            },
-
-            ) { padding ->
-
-
-
-            val haptics = LocalHapticFeedback.current
-            if (state.isAddingExerciseRecord) {
-                AddExerciseRecordDialog(state = state, onEvent = onEvent)
+          }, navigationIcon = {
+            IconButton(onClick = {
+              scope.launch {
+                drawerState.open()
+              }
+            }) {
+              Icon(imageVector = Icons.Default.Menu, contentDescription = "Toggle drawer")
             }
-            if (state.isAddingExercise) {
-                AddExerciseDialog(state = state, onEvent = onEvent)
+          })
+
+        },
+
+        ) { padding ->
+
+
+      val haptics = LocalHapticFeedback.current
+      if (state.isAddingExerciseRecord) {
+        AddExerciseRecordDialog(state = state, onEvent = onEvent)
+      }
+      if (state.isAddingExercise) {
+        AddExerciseDialog(state = state, onEvent = onEvent)
+      }
+      if (state.isShowingDeleteDialog) {
+        DeleteDialog(state = state, onEvent = onEvent)
+      }
+
+
+      Column(modifier = Modifier.padding(PaddingValues(8.dp, 64.dp, 8.dp, 0.dp))) {
+        // Map for Latest Exercise Records
+        val latestExerciseRecordMap = state.exerciseRecords.associateBy { it.exerciseId }
+
+        LazyColumn(
+
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp),
+            contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 64.dp)
+
+        ) {
+          val processedExercises = state.exercises.map { exercise ->
+            val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
+                ?: MuscleGroup(0, "?", 0x00ff00, "", 0f)
+            val latestRecord = latestExerciseRecordMap[exercise.id]
+                ?: ExerciseRecord(0, 0f, 0, LocalDateTime.now().minusYears(1))
+            Triple(exercise, muscleGroup, latestRecord)
+          }
+
+
+          fun CharSequence.unaccent(): String {
+            val regexUnaccent = "\\p{InCombiningDiacriticalMarks}+".toRegex()
+            val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
+            return regexUnaccent.replace(temp, "")
+          }
+
+          val searchTermUnaccent = state.searchTerm.unaccent()
+
+          items(processedExercises.filter { (exercise, muscleGroup, _) ->
+            state.searchTerm.isEmpty() || muscleGroup.name.unaccent()
+                .contains(searchTermUnaccent, ignoreCase = true)
+                || muscleGroup.extraSearch.unaccent()
+                .contains(searchTermUnaccent, ignoreCase = true)
+                || exercise.name.unaccent().contains(searchTermUnaccent, ignoreCase = true)
+          }) { (exercise, muscleGroup, latestRecord) ->
+
+            val currentExercise = rememberUpdatedState(exercise)
+
+            var pressOffset by remember {
+              mutableStateOf(DpOffset.Zero)
             }
-            if (state.isShowingDeleteDialog) {
-                DeleteDialog(state = state, onEvent = onEvent)
+
+            var itemHeight by remember {
+              mutableStateOf(0.dp)
             }
 
-
-            Column(modifier = Modifier.padding(PaddingValues(8.dp, 64.dp, 8.dp, 0.dp))) {
-
-
-
-                LazyColumn(
-
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(0.dp),
-                    contentPadding = PaddingValues(0.dp,0.dp,0.dp,64.dp)
-
-                ) {
-
-                    items(state.exercises.filter {
-                        var muscleGroup = MuscleGroup(
-                            name = "?",
-                            color = 0x00ff00,
-                            extraSearch = "",
-                            orderIndex = 0f
-                        )
-                        var i = 0
-                        while (i < state.muscleGroups.size) {
-                            if (state.muscleGroups[i].id == it.muscleGroupId) {
-                                muscleGroup = state.muscleGroups[i]
-                                break
-                            }
-                            i += 1
-                        }
-                        val regexUnaccent = "\\p{InCombiningDiacriticalMarks}+".toRegex()
-
-                        fun CharSequence.unaccent(): String {
-                            val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
-                            return regexUnaccent.replace(temp, "")
-                        }
-
-                        state.searchTerm == "" ||
-                                muscleGroup.name.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)  ||
-                                muscleGroup.extraSearch.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)  ||
-                                it.name.unaccent().contains(state.searchTerm.unaccent(), ignoreCase = true)
-                    }) { exercise ->
-
-                        val currentExercise = rememberUpdatedState(exercise)
-
-                        var muscleGroup = MuscleGroup(
-                            name = "?",
-                            color = 0x00ff00,
-                            extraSearch = "",
-                            orderIndex = 0f
-                        )
-                        var i = 0
-                        while (i < state.muscleGroups.size) {
-                            if (state.muscleGroups[i].id == exercise.muscleGroupId) {
-                                muscleGroup = state.muscleGroups[i]
-                                break
-                            }
-                            i += 1
-                        }
-
-                        var latestRecord = ExerciseRecord(
-                            exerciseId = 0,
-                            weight = 0f,
-                            reps = 0,
-                            date = LocalDateTime.now().minusYears(1)
-                        )
-                        i = 0
-                        while (i < state.exerciseRecords.size) {
-                            if (state.exerciseRecords[i].exerciseId == exercise.id) {
-                                latestRecord = state.exerciseRecords[i]
-                                break
-                            }
-                            i += 1
-                        }
-                        var pressOffset by remember {
-                            mutableStateOf(DpOffset.Zero)
-                        }
-
-                        var itemHeight by remember {
-                            mutableStateOf(0.dp)
-                        }
-
-                        var isContextDialogVisible by remember {
-                            mutableStateOf(false)
-                        }
-                        val density = LocalDensity.current
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val isToday = (LocalDateTime.now().dayOfMonth ==  latestRecord.date.dayOfMonth
-                                && LocalDateTime.now().month ==  latestRecord.date.month
-                                && LocalDateTime.now().year ==  latestRecord.date.year)
+            var isContextDialogVisible by remember {
+              mutableStateOf(false)
+            }
+            val density = LocalDensity.current
+            val interactionSource = remember { MutableInteractionSource() }
+            val isToday = (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth &&
+                LocalDateTime.now().month == latestRecord.date.month &&
+                LocalDateTime.now().year == latestRecord.date.year)
 
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .pointerInput(currentExercise) {
-                                    detectTapGestures(
-                                        onLongPress = {
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(currentExercise) {
+                  detectTapGestures(onLongPress = {
 
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
-                                            isContextDialogVisible = true
-                                            val press = PressInteraction.Press(it)
-                                            interactionSource.tryEmit(press)
-                                            interactionSource.tryEmit(PressInteraction.Release(press))
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                    isContextDialogVisible = true
+                    val press = PressInteraction.Press(it)
+                    interactionSource.tryEmit(press)
+                    interactionSource.tryEmit(PressInteraction.Release(press))
 
 
-                                        },
-                                        onTap = {
+                  }, onTap = {
 
-                                            if (!state.isAddingExerciseRecord && !state.isAddingExercise) {
-                                                val press = PressInteraction.Press(it)
-                                                interactionSource.tryEmit(press)
-                                                interactionSource.tryEmit(
-                                                    PressInteraction.Release(
-                                                        press
-                                                    )
-                                                )
+                    if (!state.isAddingExerciseRecord && !state.isAddingExercise) {
+                      val press = PressInteraction.Press(it)
+                      interactionSource.tryEmit(press)
+                      interactionSource.tryEmit(PressInteraction.Release(press))
 
-                                                if (!navigating) {
-                                                    navigating = true
-                                                    navController.navigate("graph/${currentExercise.value.id}")
-                                                }
+                      if (!navigating) {
+                        navigating = true
+                        navController.navigate("graph/${currentExercise.value.id}")
+                      }
 
-                                            }
-                                        }
-                                    )
-
-                                }
-                                .onSizeChanged {
-                                    itemHeight = with(density) { it.height.toDp() }
-                                }
-                                .indication(interactionSource, rememberRipple())
-                                .padding(PaddingValues(4.dp, 8.dp, 8.dp, 8.dp))
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(0.9f)
-                            ) {
-                                Button(onClick = {
-                                    onEvent(ExerciseRecordEvent.ShowExerciseRecordDialog(exercise, latestRecord))
-
-                                },
-                                    shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
-                                    contentPadding = PaddingValues(0.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(muscleGroup.color),
-                                        contentColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
-                                    else MaterialTheme.colorScheme.onBackground)) {
-                                    Icon(imageVector = Icons.Default.Add, contentDescription = "")
-                                }
-                            }
-
-                            Column(
-                                modifier = Modifier.weight(3f)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = exercise.name,
-                                        fontSize = 16.sp)
-                                }
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = muscleGroup.name, fontSize = 12.sp)
-                                }
-                            }
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                                    .fillMaxHeight()
-                                    .background( if (isToday) Color(muscleGroup.color) else Color(0x00000000),
-                                        shape = RoundedCornerShape(size = 16.dp)
-                                    )
-
-
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                ) {
-                                    var text = ""
-                                    if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0) {
-                                        text =
-                                            "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
-                                    }
-                                    Text(
-                                        text = text,
-                                        fontSize = 16.sp,
-                                        color = if (isToday) MaterialTheme.colorScheme.onPrimary
-                                        else MaterialTheme.colorScheme.onBackground
-                                    )
-                                }
-                            }
-                            DropdownMenu(
-                                expanded = isContextDialogVisible,
-                                onDismissRequest = {
-                                    isContextDialogVisible = false
-                                },
-                                offset = pressOffset.copy(
-                                    y = pressOffset.y - itemHeight
-                                ),
-                            ) {
-                                DropdownMenuItem(text = { Text("Delete") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Delete,
-                                            contentDescription = "",
-                                            tint = Color(0xffcc0000)
-                                        )
-                                    },
-                                    onClick = {
-                                        onEvent(ExerciseRecordEvent.ShowDeleteDialog(exercise.id))
-                                        isContextDialogVisible = false
-                                    })
-                            }
-                        }
                     }
+                  })
+
                 }
+                .onSizeChanged {
+                  itemHeight = with(density) { it.height.toDp() }
+                }
+                .indication(interactionSource, rememberRipple())
+                .padding(PaddingValues(4.dp, 8.dp, 8.dp, 8.dp))) {
+              Column(modifier = Modifier.weight(0.9f)) {
+                Button(onClick = {
+                  onEvent(ExerciseRecordEvent.ShowExerciseRecordDialog(exercise, latestRecord))
+
+                }, shape = CutCornerShape(6.dp, 0.dp, 6.dp, 0.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(muscleGroup.color),
+                        contentColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background
+                        else MaterialTheme.colorScheme.onBackground)) {
+                  Icon(imageVector = Icons.Default.Add, contentDescription = "")
+                }
+              }
+
+              Column(modifier = Modifier.weight(3f)) {
+                Box(contentAlignment = Alignment.Center) {
+                  Text(text = exercise.name, fontSize = 16.sp)
+                }
+                Box(contentAlignment = Alignment.Center) {
+                  Text(text = muscleGroup.name, fontSize = 12.sp)
+                }
+              }
+
+              Column(modifier = Modifier
+                  .weight(1f)
+                  .fillMaxHeight()
+                  .background(if (isToday) Color(muscleGroup.color) else Color(0x00000000),
+                      shape = RoundedCornerShape(size = 16.dp))
+
+
+              ) {
+                Box(contentAlignment = Alignment.Center,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                  var text = ""
+                  if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0) {
+                    text = "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
+                  }
+                  Text(text = text, fontSize = 16.sp,
+                      color = if (isToday) MaterialTheme.colorScheme.onPrimary
+                      else MaterialTheme.colorScheme.onBackground)
+                }
+              }
+              DropdownMenu(
+                  expanded = isContextDialogVisible,
+                  onDismissRequest = {
+                    isContextDialogVisible = false
+                  },
+                  offset = pressOffset.copy(y = pressOffset.y - itemHeight),
+              ) {
+                DropdownMenuItem(text = { Text("Delete") }, leadingIcon = {
+                  Icon(imageVector = Icons.Outlined.Delete, contentDescription = "",
+                      tint = Color(0xffcc0000))
+                }, onClick = {
+                  onEvent(ExerciseRecordEvent.ShowDeleteDialog(exercise.id))
+                  isContextDialogVisible = false
+                })
+              }
             }
+          }
         }
+      }
     }
+  }
 
 
 }

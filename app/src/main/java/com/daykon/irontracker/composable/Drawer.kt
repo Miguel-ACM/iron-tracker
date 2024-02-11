@@ -31,79 +31,57 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DrawerItem(text: String,
-               icon:  @Composable () -> Unit,
-               onClick: () -> Unit,
-               drawerState: DrawerState,
-               isSelected: Boolean = false,
-               isBeta: Boolean = false
-               ) {
-    val scope = rememberCoroutineScope()
+fun DrawerItem(text: String, icon: @Composable () -> Unit, onClick: () -> Unit,
+               drawerState: DrawerState, isSelected: Boolean = false, isBeta: Boolean = false) {
+  val scope = rememberCoroutineScope()
 
-    NavigationDrawerItem(
-        icon = icon,
-        label = { if (isBeta) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text)
-                Text(
-                    "BETA",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp, // You can adjust the font size
-                )
-            }
-        } else {
-            Text(text)
-        } },
-        selected = isSelected,
-        onClick = {
-            scope.launch { drawerState.close()
-                onClick()
-            }
-        },
-        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-    )
+  NavigationDrawerItem(icon = icon, label = {
+    if (isBeta) {
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically) {
+        Text(text)
+        Text(
+            "BETA",
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp, // You can adjust the font size
+        )
+      }
+    } else {
+      Text(text)
+    }
+  }, selected = isSelected, onClick = {
+    scope.launch {
+      drawerState.close()
+      onClick()
+    }
+  }, modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))
 }
 
 @ExperimentalMaterial3Api
 @Composable
-fun Drawer (isSelected: Int, drawerState: DrawerState,
-            navController: NavController,
-            content: @Composable () -> Unit) {
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Spacer(Modifier.height(12.dp))
-                DrawerItem(text = "Home",
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    onClick = {  },
-                    drawerState = drawerState,
-                    isSelected = isSelected == 0)
-                Spacer(Modifier.height(12.dp))
-                DrawerItem(text = "Progress Pics",
-                    icon = { Icon(painterResource(id = R.drawable.photo_camera_black_24dp),
-                        contentDescription = null) },
-                    onClick = { Log.d("TESTDEBUG", "progress")
-                        navController.navigate("progress") },
-                    drawerState = drawerState,
-                    isSelected = isSelected == 0,
-                    isBeta = true)
-                Spacer(Modifier.height(12.dp))
-                /*DrawerItem(text = "Weight",
-                    icon = { Icon(painterResource(id = R.drawable.monitor_weight_black_24dp),
-                        contentDescription = null) },
-                    onClick = {  },
-                    drawerState = drawerState,
-                    isSelected = isSelected == 0)
+fun Drawer(isSelected: Int, drawerState: DrawerState, navController: NavController,
+           content: @Composable () -> Unit) {
+  ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
+    ModalDrawerSheet {
+      Spacer(Modifier.height(12.dp))
+      DrawerItem(text = "Home", icon = { Icon(Icons.Default.Home, contentDescription = null) },
+          onClick = { }, drawerState = drawerState, isSelected = isSelected == 0)
+      Spacer(Modifier.height(12.dp))
+      DrawerItem(text = "Progress Pics", icon = {
+        Icon(painterResource(id = R.drawable.photo_camera_black_24dp), contentDescription = null)
+      }, onClick = {
+        Log.d("TESTDEBUG", "progress")
+        navController.navigate("progress")
+      }, drawerState = drawerState, isSelected = isSelected == 0, isBeta = true)
+      Spacer(Modifier.height(12.dp))/*DrawerItem(text = "Weight",
+              icon = { Icon(painterResource(id = R.drawable.monitor_weight_black_24dp),
+                  contentDescription = null) },
+              onClick = {  },
+              drawerState = drawerState,
+              isSelected = isSelected == 0)
 
-                 */
+           */
 
-            }
-        },
-        content = content
-    )
+    }
+  }, content = content)
 }

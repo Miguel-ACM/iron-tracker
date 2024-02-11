@@ -12,31 +12,30 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 
-
-class ProgressPicViewModel (
+class ProgressPicViewModel(
     private val progressPicDao: ProgressPicDao
-    ): ViewModel() {
-    private val _state = MutableStateFlow(ProgressPicState())
+) : ViewModel() {
+  private val _state = MutableStateFlow(ProgressPicState())
 
-    private val _progressPics = progressPicDao.getProgressPics()
+  private val _progressPics = progressPicDao.getProgressPics()
 
-    val state = combine(_state, _progressPics) { state,
-                                                 progressPics ->
-        state.copy(
-            progressPics = progressPics,
+  val state = combine(_state, _progressPics) { state,
+                                               progressPics ->
+    state.copy(
+        progressPics = progressPics,
 
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProgressPicState())
+  }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProgressPicState())
 
 
-    fun onEvent(event: ProgressPicEvent) {
-        when (event) {
-            is ProgressPicEvent.AddProgressPic -> {
-                viewModelScope.launch {
-                    //progressPicDao.deleteAll()
-                    progressPicDao.insertProgressPic(event.progressPic)
-                }
-            }
+  fun onEvent(event: ProgressPicEvent) {
+    when (event) {
+      is ProgressPicEvent.AddProgressPic -> {
+        viewModelScope.launch {
+          //progressPicDao.deleteAll()
+          progressPicDao.insertProgressPic(event.progressPic)
         }
+      }
     }
+  }
 }
