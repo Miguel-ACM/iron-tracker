@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +24,7 @@ import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.text.input.KeyboardType
 import kotlin.math.roundToInt
 
 @ExperimentalMaterial3Api
@@ -39,7 +41,8 @@ fun AddExerciseRecordDialog(state: ExerciseState, onEvent: (ExerciseRecordEvent)
   }, title = { Text(text = "Add exercise record") }, tonalElevation = 50.dp, text = {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Text("Weight")
-      TextField(value = state.maxWeight, onValueChange = {
+      TextField(value = state.maxWeight,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), onValueChange = {
         onEvent(ExerciseRecordEvent.SetMaxWeight(it))
       }, placeholder = {
         Text(text = "Weight (kg)")
@@ -56,16 +59,6 @@ fun AddExerciseRecordDialog(state: ExerciseState, onEvent: (ExerciseRecordEvent)
         onEvent(ExerciseRecordEvent.SetReps(it))
         sliderValue = it
       }, valueRange = 1f..20f, steps = 18)
-
-      //DropdownMenu(expanded = expanded,
-      //    onDismissRequest = { onEvent(ExerciseRecordEvent.HideDialog) }) {
-      //    state.exercises.forEach { exercise ->
-      //        DropdownMenuItem(text = {exercise.name}, onClick = {
-      //            ExerciseRecordEvent.SetExerciseId(exercise.id)
-      //        })
-      //    }
-      //}
-
     }
   }, confirmButton = {
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
