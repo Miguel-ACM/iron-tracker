@@ -39,23 +39,23 @@ class MainActivity : ComponentActivity() {
   }
 
   private val exerciseViewModel by viewModels<ExerciseViewModel>(
-      factoryProducer = {
-        object : ViewModelProvider.Factory {
-          override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ExerciseViewModel(db.exerciseDao, db.exerciseRecordDao, db.muscleGroupDao) as T
-          }
+    factoryProducer = {
+      object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+          return ExerciseViewModel(db.exerciseDao, db.exerciseRecordDao, db.muscleGroupDao) as T
         }
       }
+    }
   )
 
   private val graphViewModel by viewModels<GraphViewModel>(
-      factoryProducer = {
-        object : ViewModelProvider.Factory {
-          override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GraphViewModel(db.exerciseDao, db.exerciseRecordDao) as T
-          }
+    factoryProducer = {
+      object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+          return GraphViewModel(db.exerciseDao, db.exerciseRecordDao) as T
         }
       }
+    }
   )
 
 

@@ -51,13 +51,6 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
           orderIndex = 0f
       )
   )
-  init {
-    viewModelScope.launch {
-      _state.collect {
-        updateExerciseAndRecords()
-      }
-    }
-  }
 
   private val _exerciseRecords = _exerciseId.flatMapLatest { id ->
     flow {
@@ -77,12 +70,6 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
         exercise = exerciseWithMuscleGroup,
     )
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), GraphState())
-
-
-  private suspend fun updateExerciseAndRecords() {
-    // This function now just triggers a state update to refresh the flows
-    _state.emit(_state.value)
-  }
 
   fun onEvent(event: GraphEvent) {
     when (event) {
@@ -112,6 +99,10 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
 
       is GraphEvent.SetExerciseId -> {
         _exerciseId.value = event.exerciseId // Update exerciseId which triggers flows
+        _state.update {
+          it.copy(isBoxVisible = false,
+          selectedPoint = -1)
+        }
       }
 
       is GraphEvent.SetSelectedPoint -> {
