@@ -131,8 +131,6 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
 
       val searchTermUnaccent = state.searchTerm.unaccent().lowercase()
 
-      // val isToday =
-      //                (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth && LocalDateTime.now().month == latestRecord.date.month && LocalDateTime.now().year == latestRecord.date.year)
       val processedExercises = remember(state.exercises, state.searchTerm, state.exerciseRecords) {
         state.exercises.mapNotNull { exercise ->
           val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
