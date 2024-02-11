@@ -129,8 +129,10 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
         return regexUnaccent.replace(temp, "")
       }
 
-      val searchTermUnaccent = state.searchTerm.unaccent()
+      val searchTermUnaccent = state.searchTerm.unaccent().lowercase()
 
+      // val isToday =
+      //                (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth && LocalDateTime.now().month == latestRecord.date.month && LocalDateTime.now().year == latestRecord.date.year)
       val processedExercises = remember(state.exercises, state.searchTerm, state.exerciseRecords) {
         state.exercises.mapNotNull { exercise ->
           val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
@@ -138,11 +140,20 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
           if (muscleGroup != null && latestRecord != null) {
             Triple(exercise, muscleGroup, latestRecord)
           } else null
-        }.filter { (exercise, muscleGroup, _) ->
-          state.searchTerm.isEmpty() || muscleGroup.name.unaccent()
-              .contains(searchTermUnaccent, ignoreCase = true) || muscleGroup.extraSearch.unaccent()
-              .contains(searchTermUnaccent, ignoreCase = true) || exercise.name.unaccent()
-              .contains(searchTermUnaccent, ignoreCase = true)
+        }.filter { (exercise, muscleGroup, latestRecord) ->
+          val isToday = LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth &&
+              LocalDateTime.now().month == latestRecord.date.month &&
+              LocalDateTime.now().year == latestRecord.date.year
+          val isRelevantSearchTerm = searchTermUnaccent.isEmpty() ||
+              muscleGroup.name.unaccent().contains(searchTermUnaccent, ignoreCase = true) ||
+              muscleGroup.extraSearch.unaccent().contains(searchTermUnaccent, ignoreCase = true) ||
+              exercise.name.unaccent().contains(searchTermUnaccent, ignoreCase = true)
+
+          val matchesKeywordPartially = listOf("today", "hoy", "latest", "ultimo").any { keyword ->
+            keyword.contains(searchTermUnaccent)
+          }
+
+          isRelevantSearchTerm || (isToday && matchesKeywordPartially)
         }
       }
 
