@@ -64,6 +64,7 @@ import com.daykon.irontracker.composable.DeleteDialog
 import com.daykon.irontracker.composable.Drawer
 import com.daykon.irontracker.composable.ExpandableSearchView
 import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
+import com.daykon.irontracker.viewModels.events.GraphEvent
 import com.daykon.irontracker.viewModels.state.ExerciseState
 import kotlinx.coroutines.launch
 import java.text.Normalizer
@@ -75,6 +76,7 @@ import kotlin.math.roundToInt
 @ExperimentalMaterial3Api
 @Composable
 fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
+               onGraphEvent: (GraphEvent) -> Unit,
                navController: NavController) {
   val scope = rememberCoroutineScope()
 
@@ -206,6 +208,7 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
 
                       if (!navigating) {
                         navigating = true
+                        onGraphEvent(GraphEvent.SetExerciseId(currentExercise.value.id))
                         navController.navigate("graph/${currentExercise.value.id}")
                       }
 

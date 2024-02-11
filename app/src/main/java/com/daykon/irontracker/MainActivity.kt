@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -24,6 +25,7 @@ import com.daykon.irontracker.viewModels.ExerciseViewModel
 import com.daykon.irontracker.screens.GraphScreen
 import com.daykon.irontracker.screens.MainScreen
 import com.daykon.irontracker.ui.theme.IronTrackerTheme
+import com.daykon.irontracker.viewModels.GraphViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -46,6 +48,16 @@ class MainActivity : ComponentActivity() {
       }
   )
 
+  private val graphViewModel by viewModels<GraphViewModel>(
+      factoryProducer = {
+        object : ViewModelProvider.Factory {
+          override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return GraphViewModel(db.exerciseDao, db.exerciseRecordDao) as T
+          }
+        }
+      }
+  )
+
 
   @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,19 +66,20 @@ class MainActivity : ComponentActivity() {
     setContent {
       IronTrackerTheme {
         val exerciseState by exerciseViewModel.state.collectAsState()
+        val graphState by graphViewModel.state.collectAsState()
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = "main") {
           composable("main",
               enterTransition = { slideIn(initialOffset = { IntOffset(-it.width, 0) }) },
               exitTransition = { slideOut(targetOffset = { IntOffset(-it.width, 0) }) }) {
-            MainScreen(state = exerciseState, onEvent = exerciseViewModel::onEvent,
+            MainScreen(state = exerciseState, onEvent = exerciseViewModel::onEvent, onGraphEvent = graphViewModel::onEvent,
                 navController = navController)
 
           }
           composable("graph/{exerciseId}",
               enterTransition = { slideIn(initialOffset = { IntOffset(it.width, 0) }) },
               exitTransition = { slideOut(targetOffset = { IntOffset(it.width, 0) }) }) {
-            GraphScreen(db = db, exerciseId = it.arguments?.getString("exerciseId") ?: "1")
+            GraphScreen(state = graphState, onEvent = graphViewModel::onEvent)
           }
           composable("progress",
               enterTransition = { slideIn(initialOffset = { IntOffset(it.width, 0) }) },
