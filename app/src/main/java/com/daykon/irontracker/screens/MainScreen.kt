@@ -63,10 +63,8 @@ import com.daykon.irontracker.composable.AddExerciseRecordDialog
 import com.daykon.irontracker.composable.DeleteDialog
 import com.daykon.irontracker.composable.Drawer
 import com.daykon.irontracker.composable.ExpandableSearchView
-import com.daykon.irontracker.db.ExerciseRecord
 import com.daykon.irontracker.viewModels.events.ExerciseRecordEvent
 import com.daykon.irontracker.viewModels.state.ExerciseState
-import com.daykon.irontracker.db.MuscleGroup
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 import java.time.LocalDateTime
@@ -76,8 +74,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalFoundationApi::class)
 @ExperimentalMaterial3Api
 @Composable
-fun MainScreen(state: ExerciseState,
-               onEvent: (ExerciseRecordEvent) -> Unit,
+fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
                navController: NavController) {
   val scope = rememberCoroutineScope()
 
@@ -126,41 +123,38 @@ fun MainScreen(state: ExerciseState,
         DeleteDialog(state = state, onEvent = onEvent)
       }
 
+      fun CharSequence.unaccent(): String {
+        val regexUnaccent = "\\p{InCombiningDiacriticalMarks}+".toRegex()
+        val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
+        return regexUnaccent.replace(temp, "")
+      }
+
+      val searchTermUnaccent = state.searchTerm.unaccent()
+
+      val processedExercises = remember(state.exercises, state.searchTerm, state.exerciseRecords) {
+        state.exercises.mapNotNull { exercise ->
+          val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
+          val latestRecord = state.exerciseRecords.find { it.exerciseId == exercise.id }
+          if (muscleGroup != null && latestRecord != null) {
+            Triple(exercise, muscleGroup, latestRecord)
+          } else null
+        }.filter { (exercise, muscleGroup, _) ->
+          state.searchTerm.isEmpty() || muscleGroup.name.unaccent()
+              .contains(searchTermUnaccent, ignoreCase = true) || muscleGroup.extraSearch.unaccent()
+              .contains(searchTermUnaccent, ignoreCase = true) || exercise.name.unaccent()
+              .contains(searchTermUnaccent, ignoreCase = true)
+        }
+      }
+
+
 
       Column(modifier = Modifier.padding(PaddingValues(8.dp, 64.dp, 8.dp, 0.dp))) {
         // Map for Latest Exercise Records
-        val latestExerciseRecordMap = state.exerciseRecords.associateBy { it.exerciseId }
+        LazyColumn(modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+            contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 64.dp)) {
 
-        LazyColumn(
-
-            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp),
-            contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 64.dp)
-
-        ) {
-          val processedExercises = state.exercises.map { exercise ->
-            val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
-                ?: MuscleGroup(0, "?", 0x00ff00, "", 0f)
-            val latestRecord = latestExerciseRecordMap[exercise.id]
-                ?: ExerciseRecord(0, 0f, 0, LocalDateTime.now().minusYears(1))
-            Triple(exercise, muscleGroup, latestRecord)
-          }
-
-
-          fun CharSequence.unaccent(): String {
-            val regexUnaccent = "\\p{InCombiningDiacriticalMarks}+".toRegex()
-            val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
-            return regexUnaccent.replace(temp, "")
-          }
-
-          val searchTermUnaccent = state.searchTerm.unaccent()
-
-          items(processedExercises.filter { (exercise, muscleGroup, _) ->
-            state.searchTerm.isEmpty() || muscleGroup.name.unaccent()
-                .contains(searchTermUnaccent, ignoreCase = true)
-                || muscleGroup.extraSearch.unaccent()
-                .contains(searchTermUnaccent, ignoreCase = true)
-                || exercise.name.unaccent().contains(searchTermUnaccent, ignoreCase = true)
-          }) { (exercise, muscleGroup, latestRecord) ->
+          items(processedExercises) { (exercise, muscleGroup, latestRecord) ->
 
             val currentExercise = rememberUpdatedState(exercise)
 
@@ -177,9 +171,8 @@ fun MainScreen(state: ExerciseState,
             }
             val density = LocalDensity.current
             val interactionSource = remember { MutableInteractionSource() }
-            val isToday = (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth &&
-                LocalDateTime.now().month == latestRecord.date.month &&
-                LocalDateTime.now().year == latestRecord.date.year)
+            val isToday =
+                (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth && LocalDateTime.now().month == latestRecord.date.month && LocalDateTime.now().year == latestRecord.date.year)
 
 
             Row(modifier = Modifier
