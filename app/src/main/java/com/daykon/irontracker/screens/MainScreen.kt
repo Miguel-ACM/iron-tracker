@@ -137,17 +137,20 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
         state.exercises.mapNotNull { exercise ->
           val muscleGroup = state.muscleGroups.find { it.id == exercise.muscleGroupId }
           val latestRecord = state.exerciseRecords.find { it.exerciseId == exercise.id }
-          if (muscleGroup != null && latestRecord != null) {
+          if (muscleGroup != null) {
             Triple(exercise, muscleGroup, latestRecord)
           } else null
         }.filter { (exercise, muscleGroup, latestRecord) ->
-          val isToday = LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth &&
-              LocalDateTime.now().month == latestRecord.date.month &&
-              LocalDateTime.now().year == latestRecord.date.year
           val isRelevantSearchTerm = searchTermUnaccent.isEmpty() ||
               muscleGroup.name.unaccent().contains(searchTermUnaccent, ignoreCase = true) ||
               muscleGroup.extraSearch.unaccent().contains(searchTermUnaccent, ignoreCase = true) ||
               exercise.name.unaccent().contains(searchTermUnaccent, ignoreCase = true)
+
+          val isToday = latestRecord?.let {
+            LocalDateTime.now().dayOfMonth == it.date.dayOfMonth &&
+                LocalDateTime.now().month == it.date.month &&
+                LocalDateTime.now().year == it.date.year
+          } ?: false
 
           val matchesKeywordPartially = listOf("today", "hoy", "latest", "ultimo").any { keyword ->
             keyword.contains(searchTermUnaccent)
@@ -182,8 +185,10 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
             }
             val density = LocalDensity.current
             val interactionSource = remember { MutableInteractionSource() }
-            val isToday =
-                (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth && LocalDateTime.now().month == latestRecord.date.month && LocalDateTime.now().year == latestRecord.date.year)
+            val isToday = latestRecord != null &&
+                (LocalDateTime.now().dayOfMonth == latestRecord.date.dayOfMonth
+                    && LocalDateTime.now().month == latestRecord.date.month
+                    && LocalDateTime.now().year == latestRecord.date.year)
 
 
             Row(modifier = Modifier
@@ -251,15 +256,19 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
 
 
               ) {
-                Box(contentAlignment = Alignment.Center,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Box(
+                  contentAlignment = Alignment.Center,
+                  modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
                   var text = ""
-                  if (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0) {
+                  if (latestRecord != null && (latestRecord.reps != 0 || latestRecord.weight.roundToInt() != 0)) {
                     text = "${latestRecord.reps}x${latestRecord.weight.roundToInt()}kg"
                   }
-                  Text(text = text, fontSize = 16.sp,
-                      color = if (isToday) MaterialTheme.colorScheme.onPrimary
-                      else MaterialTheme.colorScheme.onBackground)
+                  Text(
+                    text = text, fontSize = 16.sp,
+                    color = if (isToday) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onBackground
+                  )
                 }
               }
               DropdownMenu(

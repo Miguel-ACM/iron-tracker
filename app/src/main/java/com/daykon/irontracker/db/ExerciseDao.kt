@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ExerciseDao {
   @Upsert
-  suspend fun insertExercise(exercise: Exercise)
+  suspend fun insertExercise(exercise: Exercise): Long
 
   @Query(
       "SELECT e.* FROM Exercise e JOIN muscleGroup m ON e.muscleGroupId=m.id ORDER BY m.orderIndex ASC")

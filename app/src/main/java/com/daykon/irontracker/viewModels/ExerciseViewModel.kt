@@ -92,7 +92,7 @@ class ExerciseViewModel(
       }
 
       is ExerciseRecordEvent.ShowExerciseRecordDialog -> {
-        val maxWeight = event.exerciseRecord.weight
+        val maxWeight = event.exerciseRecord?.weight ?: 1f
 
         val maxWeightString =
             if (maxWeight <= 0f) {
@@ -104,7 +104,7 @@ class ExerciseViewModel(
         _state.update {
           it.copy(
               exerciseId = event.exercise.id,
-              maxReps = event.exerciseRecord.reps.toFloat(),
+              maxReps = event.exerciseRecord?.reps?.toFloat() ?: 8f,
               maxWeight = maxWeightString ?: "",
               isAddingExerciseRecord = true
           )

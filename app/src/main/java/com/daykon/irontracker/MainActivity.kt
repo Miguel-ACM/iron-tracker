@@ -34,8 +34,7 @@ class MainActivity : ComponentActivity() {
         applicationContext,
         Database::class.java,
         "ironTracker.db"
-    ).addMigrations(MIGRATION_2_3)
-        .createFromAsset("ironTracker.db").build()
+    ).addMigrations(MIGRATION_2_3).build()
   }
 
   private val exerciseViewModel by viewModels<ExerciseViewModel>(
