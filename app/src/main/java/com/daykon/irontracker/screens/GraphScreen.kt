@@ -191,10 +191,6 @@ fun Graph(
                 record.weight
             }
             val x1: Float = xAxisSpace * date / minutesBetween + paddingX0Px
-            Log.d(
-                "DEBUG",
-                minValueInt.toString() + " " + maxValueInt.toString() + " " + value.toString() + " | " + ((value - minValueInt) / (maxValueInt - minValueInt)).toString()
-            )
             var y1: Float = yAxisSpace * (1 - (value - minValueInt) / (maxValueInt - minValueInt))
             if (configuration.layoutDirection == Configuration.ORIENTATION_LANDSCAPE) {
                 y1 = yAxisSpace - y1

@@ -13,6 +13,7 @@ sealed interface GraphEvent {
   data class SetBoxVisibility(val isVisible: Boolean) : GraphEvent
   data class DeleteRecord(val event: ExerciseRecord) : GraphEvent
   object UpdateRecord : GraphEvent
+  object Refresh : GraphEvent
 
 
   //data class SetRecordEvent(val ):

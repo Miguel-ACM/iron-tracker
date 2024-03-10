@@ -11,6 +11,7 @@ import com.daykon.irontracker.viewModels.events.GraphEvent
 import com.daykon.irontracker.viewModels.state.GraphState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,12 +34,13 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
   private val _exerciseId = MutableStateFlow(0) // Default exerciseId
   val exerciseId: StateFlow<Int> = _exerciseId.asStateFlow()
   private val _state = MutableStateFlow(GraphState())
+  private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
   private var startDateTime: LocalDateTime = LocalDateTime.now().minusYears(10)
   private var endDateTime: LocalDateTime = LocalDateTime.now().plusYears(1)
 
   // Updated to use functions for dynamic fetching
-  val defaultExerciseValueWithMatchGroup = ExerciseWithMuscleGroup(
+  private val defaultExerciseValueWithMatchGroup = ExerciseWithMuscleGroup(
     Exercise(
         id = 0,
         name = "Exercise",
@@ -52,11 +55,13 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
       )
   )
 
-  private val _exerciseRecords = _exerciseId.flatMapLatest { id ->
-    flow {
-      emit(exerciseRecordDao.getExerciseRecordsBetweenDatesNoFlow(id, startDateTime, endDateTime))
-    }.flowOn(Dispatchers.IO)
-  }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+  private val _exerciseRecords = combine(
+    _exerciseId,
+    refreshTrigger.onStart { emit(Unit) } // Emit once initially to trigger loading
+  ) { id, _ ->
+    exerciseRecordDao.getExerciseRecordsBetweenDatesNoFlow(id, startDateTime, endDateTime)
+  }.flowOn(Dispatchers.IO)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
   private val _exerciseWithMuscleGroup = _exerciseId.flatMapLatest { id ->
     flow {
@@ -150,7 +155,9 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
         viewModelScope.launch(Dispatchers.IO) {
           exerciseRecordDao.update(exerciseId = exerciseRecordId, weight = maxWeight.toFloat(),
               reps = maxReps.toInt())
+          refreshTrigger.emit(Unit)
         }
+
       }
 
       is GraphEvent.SetBoxVisibility -> {
@@ -163,6 +170,14 @@ class GraphViewModel(private val exerciseDao: ExerciseDao,
       is GraphEvent.DeleteRecord -> {
         viewModelScope.launch {
           exerciseRecordDao.deleteRecord(event.event)
+          refreshTrigger.emit(Unit)
+        }
+
+      }
+
+      GraphEvent.Refresh -> {
+        viewModelScope.launch {
+          refreshTrigger.emit(Unit)
         }
       }
     }

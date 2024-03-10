@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.daykon.irontracker.viewModels.events.GraphEvent
 
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
           composable("graph/{exerciseId}",
               enterTransition = { slideIn(initialOffset = { IntOffset(it.width, 0) }) },
               exitTransition = { slideOut(targetOffset = { IntOffset(it.width, 0) }) }) {
+              graphViewModel.onEvent(GraphEvent.Refresh)
             GraphScreen(state = graphState, onEvent = graphViewModel::onEvent)
           }
           composable("progress",
