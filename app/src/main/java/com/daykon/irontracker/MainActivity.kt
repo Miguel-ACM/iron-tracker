@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.daykon.irontracker.db.Database
 import com.daykon.irontracker.db.MIGRATION_2_3
+import com.daykon.irontracker.db.MIGRATION_3_4
 import com.daykon.irontracker.screens.CameraScreen
 import com.daykon.irontracker.viewModels.ExerciseViewModel
 import com.daykon.irontracker.screens.GraphScreen
@@ -35,7 +36,7 @@ class MainActivity : ComponentActivity() {
         applicationContext,
         Database::class.java,
         "ironTracker.db"
-    ).addMigrations(MIGRATION_2_3).build()
+    ).addMigrations(MIGRATION_2_3, MIGRATION_3_4).build()
   }
 
   private val exerciseViewModel by viewModels<ExerciseViewModel>(

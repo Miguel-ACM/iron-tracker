@@ -15,5 +15,6 @@ data class ExerciseRecord(
     val weight: Float,
     val reps: Int,
     val date: LocalDateTime,
+    val isFav: Boolean,
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
 )

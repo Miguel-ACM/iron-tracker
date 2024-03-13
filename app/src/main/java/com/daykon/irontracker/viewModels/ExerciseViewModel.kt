@@ -74,7 +74,8 @@ class ExerciseViewModel(
             exerciseId = exerciseId,
             weight = maxWeight.toFloat(),
             reps = maxReps.roundToInt(),
-            date = LocalDateTime.now()
+            date = LocalDateTime.now(),
+            isFav = false,
         )
 
         viewModelScope.launch {

@@ -14,9 +14,15 @@ val MIGRATION_2_3: Migration = object : Migration(2, 3) {
   }
 }
 
+val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+  override fun migrate(database: SupportSQLiteDatabase) {
+    database.execSQL("ALTER TABLE ExerciseRecord ADD COLUMN isFav INTEGER NOT NULL DEFAULT 0")
+  }
+}
+
 @Database(
     entities = [MuscleGroup::class, Exercise::class, ExerciseRecord::class, ProgressPic::class],
-    version = 3, exportSchema = true, autoMigrations = [AutoMigration(from = 1, to = 2)]
+    version = 4, exportSchema = true, autoMigrations = [AutoMigration(from = 1, to = 2)]
 )
 
 @TypeConverters(Converter::class)

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -283,6 +284,12 @@ fun MainScreen(state: ExerciseState, onEvent: (ExerciseRecordEvent) -> Unit,
                       tint = Color(0xffcc0000))
                 }, onClick = {
                   onEvent(ExerciseRecordEvent.ShowDeleteDialog(exercise.id))
+                  isContextDialogVisible = false
+                })
+                DropdownMenuItem(text = { Text("Favorite") }, leadingIcon = {
+                  Icon(imageVector = Icons.Outlined.Star, contentDescription = "")
+                }, onClick = {
+                  //onEvent(ExerciseRecordEvent.Favorite(exercise.id))
                   isContextDialogVisible = false
                 })
               }
